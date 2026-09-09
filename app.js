@@ -1,16 +1,14 @@
-// Ожидаем полной загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Проверяем наличие Telegram WebApp
+    // ===================== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====================
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand(); // Растягиваем на всю высоту
+        tg.expand();
         console.log('✅ Telegram WebApp инициализирован');
     } else {
         console.warn('⚠️ Telegram WebApp не найден, работаем в браузере');
-        // В браузере создаём заглушку
         tg = {
             ready: function() {},
             expand: function() {},
@@ -18,7 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // ===================== ДАННЫЕ (временные) =====================
+    // ===================== ДАННЫЕ =====================
     let events = [
         { name: "Конференция Dahua", date: "2026-09-22", is_public: true },
         { name: "Техно-День (Москва)", date: "2026-10-08", is_public: false },
@@ -79,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
         currentView = 'mouse';
         document.getElementById('backBtn').style.display = 'block';
         const now = new Date();
-        const target = new Date(2027, 1, 13); // 13 февраля 2027
+        const target = new Date(2027, 1, 13);
         const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
         render(`
             <h2>🐭 День мыши</h2>
@@ -102,42 +100,78 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         html += `
             <div style="margin-top:16px;">
-                <button onclick="addEvent()" style="padding:10px 20px; border:none; border-radius:10px; background:var(--tg-theme-button-color, #0088cc); color:var(--tg-theme-button-text-color, #ffffff); font-weight:600; cursor:pointer; width:100%;">
+                <button id="addEventBtn" style="padding:10px 20px; border:none; border-radius:10px; background:var(--tg-theme-button-color, #0088cc); color:var(--tg-theme-button-text-color, #ffffff); font-weight:600; cursor:pointer; width:100%;">
                     ➕ Добавить событие
                 </button>
             </div>
         `;
         render(html);
+        // После вставки HTML навешиваем обработчик на кнопку "Добавить"
+        const addBtn = document.getElementById('addEventBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                const name = prompt("Введи название события:");
+                if (!name) return;
+                const date = prompt("Введи дату (ГГГГ-ММ-ДД):");
+                if (!date) return;
+                const isPublic = confirm("Сделать общим?");
+                events.push({ name, date, is_public: isPublic });
+                showEvents();
+                if (tg) {
+                    tg.sendData(JSON.stringify({ action: 'add_event', name, date, is_public: isPublic }));
+                }
+            });
+        }
         console.log('📅 Показаны события');
     }
-
-    // ===================== ДОБАВЛЕНИЕ СОБЫТИЯ (через диалог) =====================
-
-    function addEvent() {
-        const name = prompt("Введи название события:");
-        if (!name) return;
-        const date = prompt("Введи дату (ГГГГ-ММ-ДД):");
-        if (!date) return;
-        const isPublic = confirm("Сделать общим?");
-        events.push({ name, date, is_public: isPublic });
-        showEvents();
-        // Отправляем данные боту (если есть Telegram)
-        if (tg) {
-            tg.sendData(JSON.stringify({ action: 'add_event', name, date, is_public: isPublic }));
-            console.log('📤 Отправлены данные боту');
-        }
-    }
-
-    // ===================== НАЗАД =====================
 
     function goBack() {
         showMainMenu();
     }
 
+    // ===================== НАВЕШИВАНИЕ СОБЫТИЙ НА КНОПКИ МЕНЮ =====================
+
+    function setupNavigation() {
+        const navButtons = {
+            'Курсы': showRates,
+            'Погода': showWeather,
+            'День мыши': showMouseDay,
+            'События': showEvents
+        };
+
+        // Ищем все кнопки внутри nav
+        const nav = document.getElementById('mainMenu');
+        if (nav) {
+            const buttons = nav.querySelectorAll('button');
+            buttons.forEach(btn => {
+                const text = btn.textContent.trim();
+                // Убираем эмодзи для поиска
+                const cleanText = text.replace(/[^\w\s]/g, '').trim();
+                if (navButtons[cleanText]) {
+                    btn.addEventListener('click', navButtons[cleanText]);
+                } else {
+                    // fallback: если не совпало, пробуем по наличию подстроки
+                    for (let key in navButtons) {
+                        if (text.includes(key)) {
+                            btn.addEventListener('click', navButtons[key]);
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+
+        // Кнопка "Назад"
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) {
+            backBtn.addEventListener('click', goBack);
+        }
+    }
+
     // ===================== ЗАПУСК =====================
 
-    // Показываем главное меню при загрузке
     showMainMenu();
+    setupNavigation();
 
     console.log('🚀 Приложение инициализировано');
 });
