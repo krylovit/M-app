@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===================== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====================
+    // ===== ИНИЦИАЛИЗАЦИЯ =====
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -17,14 +17,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // ===================== СОСТОЯНИЕ =====================
+    // ===== СОСТОЯНИЕ =====
     let events = [];
     let rates = null;
     let weather = null;
     let mouseDay = null;
     let currentView = 'main';
 
-    // ===================== ФУНКЦИИ ОТПРАВКИ ДАННЫХ БОТУ =====================
+    // ===== ОТПРАВКА БОТУ =====
     function sendToBot(action, payload = {}) {
         const data = JSON.stringify({ action, ...payload });
         if (tg) {
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sendToBot('add_event', { name, date, is_public: isPublic });
     }
 
-    // ===================== ОБРАБОТКА ОТВЕТОВ ОТ БОТА =====================
+    // ===== ПРИЁМ ОТВЕТОВ =====
     if (tg) {
         tg.onEvent('data', function(data) {
             try {
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'main') showMainMenu();
     }
 
-    // ===================== ФУНКЦИИ ОТОБРАЖЕНИЯ =====================
+    // ===== ОТОБРАЖЕНИЕ =====
     function render(html) {
         const content = document.getElementById('content');
         if (content) content.innerHTML = html;
@@ -180,51 +180,28 @@ document.addEventListener('DOMContentLoaded', function() {
         showMainMenu();
     }
 
-    // ===================== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ НА КНОПКИ МЕНЮ =====================
+    // ===== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ПО data-action =====
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
-        if (!nav) {
-            console.error('❌ Элемент mainMenu не найден');
-            return;
-        }
+        if (!nav) return;
 
         const buttons = nav.querySelectorAll('button');
-        // ЯВНО ОБЪЯВЛЯЕМ actions ВНУТРИ ФУНКЦИИ
-        const actions = {
-            'Курсы': showRates,
-            'Погода': showWeather,
-            'День мыши': showMouseDay,
-            'События': showEvents
-        };
-
         buttons.forEach(btn => {
-            const text = btn.textContent.trim().replace(/[^\w\s]/g, '').trim();
-            if (actions[text]) {
-                btn.addEventListener('click', actions[text]);
-                console.log(`✅ Кнопка "${text}" привязана`);
-            } else {
-                // fallback: поиск по подстроке
-                for (let key in actions) {
-                    if (text.includes(key)) {
-                        btn.addEventListener('click', actions[key]);
-                        console.log(`✅ Кнопка "${text}" (содержит "${key}") привязана`);
-                        break;
-                    }
-                }
-            }
+            const action = btn.getAttribute('data-action');
+            if (action === 'rates') btn.addEventListener('click', showRates);
+            else if (action === 'weather') btn.addEventListener('click', showWeather);
+            else if (action === 'mouse') btn.addEventListener('click', showMouseDay);
+            else if (action === 'events') btn.addEventListener('click', showEvents);
         });
 
         const backBtn = document.getElementById('backBtn');
-        if (backBtn) {
-            backBtn.addEventListener('click', goBack);
-            console.log('✅ Кнопка "Назад" привязана');
-        }
+        if (backBtn) backBtn.addEventListener('click', goBack);
     }
 
-    // ===================== ЗАПУСК =====================
-    fetchAllData();      // запрашиваем данные у бота
-    showMainMenu();      // показываем главное меню
-    setupNavigation();   // навешиваем обработчики
+    // ===== ЗАПУСК =====
+    fetchAllData();
+    showMainMenu();
+    setupNavigation();
 
     console.log('🚀 Приложение инициализировано');
 });
