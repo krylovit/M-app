@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-
-    // ===================== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====================
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -12,28 +10,78 @@ document.addEventListener('DOMContentLoaded', function() {
         tg = {
             ready: function() {},
             expand: function() {},
-            sendData: function(data) { console.log('Отправка данных (заглушка):', data); }
+            sendData: function(data) { console.log('Отправка (заглушка):', data); },
+            onEvent: function() {}
         };
     }
 
-    // ===================== ДАННЫЕ =====================
-    let events = [
-        { name: "Конференция Dahua", date: "2026-09-22", is_public: true },
-        { name: "Техно-День (Москва)", date: "2026-10-08", is_public: false },
-        { name: "ДР", date: "2026-11-12", is_public: false }
-    ];
-
+    let events = [];
+    let rates = null;
+    let weather = null;
+    let mouseDay = null;
     let currentView = 'main';
 
-    // ===================== ФУНКЦИИ ОТОБРАЖЕНИЯ =====================
-
-    function render(contentHTML) {
-        const content = document.getElementById('content');
-        if (content) {
-            content.innerHTML = contentHTML;
-        } else {
-            console.error('❌ Элемент #content не найден');
+    function sendToBot(action, payload = {}) {
+        const data = JSON.stringify({ action, ...payload });
+        if (tg) {
+            tg.sendData(data);
+            console.log('📤 Отправлено боту:', data);
         }
+    }
+
+    function fetchAllData() { sendToBot('get_all_data'); }
+    function fetchRates() { sendToBot('get_rates'); }
+    function fetchWeather() { sendToBot('get_weather'); }
+    function fetchEvents() { sendToBot('get_events'); }
+    function addEventToBot(name, date, isPublic) {
+        sendToBot('add_event', { name, date, is_public: isPublic });
+    }
+
+    if (tg) {
+        tg.onEvent('data', function(data) {
+            try {
+                const response = JSON.parse(data);
+                console.log('📥 Получено от бота:', response);
+                handleBotResponse(response);
+            } catch (e) {
+                console.error('❌ Ошибка парсинга ответа бота:', e);
+            }
+        });
+    }
+
+    function handleBotResponse(response) {
+        const { action, payload } = response;
+        switch (action) {
+            case 'get_all_data':
+                if (payload.rates) rates = payload.rates;
+                if (payload.weather) weather = payload.weather;
+                if (payload.events) events = payload.events;
+                if (payload.mouseDay !== undefined) mouseDay = payload.mouseDay;
+                break;
+            case 'get_rates':
+                if (payload) rates = payload;
+                break;
+            case 'get_weather':
+                if (payload) weather = payload;
+                break;
+            case 'get_events':
+                if (payload) events = payload;
+                break;
+            case 'add_event':
+                if (payload && payload.success) fetchEvents();
+                break;
+            default:
+                console.warn('⚠️ Неизвестный action:', action);
+        }
+        if (currentView === 'rates') showRates();
+        else if (currentView === 'weather') showWeather();
+        else if (currentView === 'events') showEvents();
+        else if (currentView === 'main') showMainMenu();
+    }
+
+    function render(html) {
+        const content = document.getElementById('content');
+        if (content) content.innerHTML = html;
     }
 
     function showMainMenu() {
@@ -45,133 +93,115 @@ document.addEventListener('DOMContentLoaded', function() {
                 ${tg ? '✅ Подключено к Telegram' : '⚠️ Работаем в браузере'}
             </p>
         `);
-        console.log('🏠 Главное меню отображено');
     }
 
     function showRates() {
         currentView = 'rates';
         document.getElementById('backBtn').style.display = 'block';
+        if (!rates) {
+            render(`<h2>💵 Курсы валют</h2><p>Загрузка...</p>`);
+            fetchRates();
+            return;
+        }
         render(`
             <h2>💵 Курсы валют</h2>
-            <p>🇺🇸 1 USD = <b>86.42</b> RUB</p>
-            <p>🇺🇸 1 USD = <b>32.90</b> THB</p>
-            <p>🇹🇭 1 THB = <b>2.63</b> RUB</p>
-            <p style="font-size:12px; color:var(--tg-theme-hint-color, gray); margin-top:12px;">Обновлено: ${new Date().toLocaleTimeString()}</p>
+            <p>🇺🇸 1 USD = <b>${rates.usd_rub}</b> RUB</p>
+            <p>🇺🇸 1 USD = <b>${rates.usd_thb}</b> THB</p>
+            <p>🇹🇭 1 THB = <b>${rates.thb_rub}</b> RUB</p>
+            <p style="font-size:12px; color:gray;">Обновлено: ${new Date().toLocaleTimeString()}</p>
         `);
-        console.log('💵 Показаны курсы');
     }
 
     function showWeather() {
         currentView = 'weather';
         document.getElementById('backBtn').style.display = 'block';
+        if (!weather) {
+            render(`<h2>🌴 Погода на Кочанге</h2><p>Загрузка...</p>`);
+            fetchWeather();
+            return;
+        }
         render(`
             <h2>🌴 Погода на Кочанге</h2>
-            <p>🌡️ <b>28°C</b></p>
-            <p>💨 <b>15 км/ч</b></p>
-            <p style="font-size:12px; color:var(--tg-theme-hint-color, gray); margin-top:12px;">Обновлено: ${new Date().toLocaleTimeString()}</p>
+            <p>🌡️ <b>${weather.temp}</b></p>
+            <p>💨 <b>${weather.wind}</b></p>
+            <p style="font-size:12px; color:gray;">Обновлено: ${new Date().toLocaleTimeString()}</p>
         `);
-        console.log('🌤️ Показана погода');
     }
 
     function showMouseDay() {
         currentView = 'mouse';
         document.getElementById('backBtn').style.display = 'block';
-        const now = new Date();
-        const target = new Date(2027, 1, 13);
-        const diff = Math.ceil((target - now) / (1000 * 60 * 60 * 24));
+        const days = mouseDay !== null ? mouseDay : '...';
         render(`
             <h2>🐭 День мыши</h2>
-            <p>До 13 февраля осталось <b>${diff}</b> дней</p>
+            <p>До 13 февраля осталось <b>${days}</b> дней</p>
         `);
-        console.log('🐭 Показан день мыши');
     }
 
     function showEvents() {
         currentView = 'events';
         document.getElementById('backBtn').style.display = 'block';
-        let html = `<h2>📅 Мои события</h2>`;
-        if (events.length === 0) {
-            html += `<p>У тебя пока нет событий</p>`;
-        } else {
-            events.forEach(e => {
-                const icon = e.is_public ? '🌍' : '🔒';
-                html += `<div class="event-item">${icon} <b>${e.name}</b> — ${e.date}</div>`;
-            });
+        if (!events || events.length === 0) {
+            render(`<h2>📅 Мои события</h2><p>Загрузка...</p>`);
+            fetchEvents();
+            return;
         }
+        let html = `<h2>📅 Мои события</h2>`;
+        events.forEach(e => {
+            const icon = e.is_public ? '🌍' : '🔒';
+            html += `<div class="event-item">${icon} <b>${e.name}</b> — ${e.date}</div>`;
+        });
         html += `
             <div style="margin-top:16px;">
-                <button id="addEventBtn" style="padding:10px 20px; border:none; border-radius:10px; background:var(--tg-theme-button-color, #0088cc); color:var(--tg-theme-button-text-color, #ffffff); font-weight:600; cursor:pointer; width:100%;">
+                <button id="addEventBtn" style="padding:10px 20px; border:none; border-radius:10px; background:var(--tg-theme-button-color, #0088cc); color:#fff; font-weight:600; cursor:pointer; width:100%;">
                     ➕ Добавить событие
                 </button>
             </div>
         `;
         render(html);
-        // После вставки HTML навешиваем обработчик на кнопку "Добавить"
-        const addBtn = document.getElementById('addEventBtn');
-        if (addBtn) {
-            addBtn.addEventListener('click', function() {
-                const name = prompt("Введи название события:");
-                if (!name) return;
-                const date = prompt("Введи дату (ГГГГ-ММ-ДД):");
-                if (!date) return;
-                const isPublic = confirm("Сделать общим?");
-                events.push({ name, date, is_public: isPublic });
-                showEvents();
-                if (tg) {
-                    tg.sendData(JSON.stringify({ action: 'add_event', name, date, is_public: isPublic }));
-                }
-            });
-        }
-        console.log('📅 Показаны события');
+        document.getElementById('addEventBtn').addEventListener('click', function() {
+            const name = prompt("Введи название события:");
+            if (!name) return;
+            const date = prompt("Введи дату (ГГГГ-ММ-ДД):");
+            if (!date) return;
+            const isPublic = confirm("Сделать общим?");
+            addEventToBot(name, date, isPublic);
+        });
     }
 
     function goBack() {
         showMainMenu();
     }
 
-    // ===================== НАВЕШИВАНИЕ СОБЫТИЙ НА КНОПКИ МЕНЮ =====================
-
     function setupNavigation() {
-        const navButtons = {
-            'Курсы': showRates,
-            'Погода': showWeather,
-            'День мыши': showMouseDay,
-            'События': showEvents
-        };
-
-        // Ищем все кнопки внутри nav
         const nav = document.getElementById('mainMenu');
         if (nav) {
             const buttons = nav.querySelectorAll('button');
+            const actions = {
+                'Курсы': showRates,
+                'Погода': showWeather,
+                'День мыши': showMouseDay,
+                'События': showEvents
+            };
             buttons.forEach(btn => {
-                const text = btn.textContent.trim();
-                // Убираем эмодзи для поиска
-                const cleanText = text.replace(/[^\w\s]/g, '').trim();
-                if (navButtons[cleanText]) {
-                    btn.addEventListener('click', navButtons[cleanText]);
+                const text = btn.textContent.trim().replace(/[^\w\s]/g, '').trim();
+                if (actions[text]) {
+                    btn.addEventListener('click', actions[text]);
                 } else {
-                    // fallback: если не совпало, пробуем по наличию подстроки
-                    for (let key in navButtons) {
+                    for (let key in actions) {
                         if (text.includes(key)) {
-                            btn.addEventListener('click', navButtons[key]);
+                            btn.addEventListener('click', actions[key]);
                             break;
                         }
                     }
                 }
             });
         }
-
-        // Кнопка "Назад"
-        const backBtn = document.getElementById('backBtn');
-        if (backBtn) {
-            backBtn.addEventListener('click', goBack);
-        }
+        document.getElementById('backBtn').addEventListener('click', goBack);
     }
 
-    // ===================== ЗАПУСК =====================
-
+    fetchAllData();
     showMainMenu();
     setupNavigation();
-
     console.log('🚀 Приложение инициализировано');
 });
