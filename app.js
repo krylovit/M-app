@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
+
+    // ===================== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====================
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -15,12 +17,14 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    // ===================== СОСТОЯНИЕ =====================
     let events = [];
     let rates = null;
     let weather = null;
     let mouseDay = null;
     let currentView = 'main';
 
+    // ===================== ФУНКЦИИ ОТПРАВКИ ДАННЫХ БОТУ =====================
     function sendToBot(action, payload = {}) {
         const data = JSON.stringify({ action, ...payload });
         if (tg) {
@@ -37,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
         sendToBot('add_event', { name, date, is_public: isPublic });
     }
 
+    // ===================== ОБРАБОТКА ОТВЕТОВ ОТ БОТА =====================
     if (tg) {
         tg.onEvent('data', function(data) {
             try {
@@ -73,12 +78,14 @@ document.addEventListener('DOMContentLoaded', function() {
             default:
                 console.warn('⚠️ Неизвестный action:', action);
         }
+        // Перерисовываем текущий экран
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'events') showEvents();
         else if (currentView === 'main') showMainMenu();
     }
 
+    // ===================== ФУНКЦИИ ОТОБРАЖЕНИЯ =====================
     function render(html) {
         const content = document.getElementById('content');
         if (content) content.innerHTML = html;
@@ -173,35 +180,51 @@ document.addEventListener('DOMContentLoaded', function() {
         showMainMenu();
     }
 
+    // ===================== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ НА КНОПКИ МЕНЮ =====================
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
-        if (nav) {
-            const buttons = nav.querySelectorAll('button');
-            const actions = {
-                'Курсы': showRates,
-                'Погода': showWeather,
-                'День мыши': showMouseDay,
-                'События': showEvents
-            };
-            buttons.forEach(btn => {
-                const text = btn.textContent.trim().replace(/[^\w\s]/g, '').trim();
-                if (actions[text]) {
-                    btn.addEventListener('click', actions[text]);
-                } else {
-                    for (let key in actions) {
-                        if (text.includes(key)) {
-                            btn.addEventListener('click', actions[key]);
-                            break;
-                        }
+        if (!nav) {
+            console.error('❌ Элемент mainMenu не найден');
+            return;
+        }
+
+        const buttons = nav.querySelectorAll('button');
+        // ЯВНО ОБЪЯВЛЯЕМ actions ВНУТРИ ФУНКЦИИ
+        const actions = {
+            'Курсы': showRates,
+            'Погода': showWeather,
+            'День мыши': showMouseDay,
+            'События': showEvents
+        };
+
+        buttons.forEach(btn => {
+            const text = btn.textContent.trim().replace(/[^\w\s]/g, '').trim();
+            if (actions[text]) {
+                btn.addEventListener('click', actions[text]);
+                console.log(`✅ Кнопка "${text}" привязана`);
+            } else {
+                // fallback: поиск по подстроке
+                for (let key in actions) {
+                    if (text.includes(key)) {
+                        btn.addEventListener('click', actions[key]);
+                        console.log(`✅ Кнопка "${text}" (содержит "${key}") привязана`);
+                        break;
                     }
                 }
-            });
+            }
+        });
+
+        const backBtn = document.getElementById('backBtn');
+        if (backBtn) {
+            backBtn.addEventListener('click', goBack);
+            console.log('✅ Кнопка "Назад" привязана');
         }
-        document.getElementById('backBtn').addEventListener('click', goBack);
     }
 
-    fetchAllData();
-    showMainMenu();
-    setupNavigation();
+    // ===================== ЗАПУСК =====================
+    fetchAllData();      // запрашиваем данные у бота
+    showMainMenu();      // показываем главное меню
+    setupNavigation();   // навешиваем обработчики
+
     console.log('🚀 Приложение инициализировано');
 });
