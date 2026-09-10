@@ -12,19 +12,21 @@ document.addEventListener('DOMContentLoaded', function() {
         tg = { ready: function() {}, expand: function() {} };
     }
 
-    // ===== АДРЕС API (ngrok - работает и в браузере, и в Telegram) =====
+    // ===== КОНФИГУРАЦИЯ API =====
     const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
-
     const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
     // ===== СОСТОЯНИЕ =====
     let events = [];
+    let publicEvents = [];
     let rates = null;
     let weather = null;
     let mouseDay = null;
     let currentView = 'main';
     let showHidden = false;
     let editingEventId = null;
+    let editingImageFilename = '';  // Имя файла фото (текущее или новое)
+    let pendingDeleteId = null;
 
     // ===== УТИЛИТЫ =====
     function getUserId() {
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
             rates = data.rates;
             weather = data.weather;
             events = data.events;
+            publicEvents = data.public_events || [];
             mouseDay = data.mouseDay;
             renderCurrentView();
         } catch (e) {
@@ -102,12 +105,24 @@ document.addEventListener('DOMContentLoaded', function() {
         return await response.json();
     }
 
+    async function uploadImageApi(file) {
+        const formData = new FormData();
+        formData.append('image', file);
+        const response = await fetch(`${API_URL}/api/upload_image`, {
+            method: 'POST',
+            headers: HEADERS,
+            body: formData
+        });
+        return await response.json();
+    }
+
     // ===== ВИДЫ =====
     function renderCurrentView() {
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'mouse') showMouseDay();
         else if (currentView === 'events') showEvents();
+        else if (currentView === 'public_events') showPublicEvents();
         else if (currentView === 'edit') showEditScreen();
         else showMainMenu();
     }
@@ -159,41 +174,20 @@ document.addEventListener('DOMContentLoaded', function() {
         `);
     }
 
-    // ===== СПИСОК СОБЫТИЙ =====
+    // ===== ЭКРАН "МОИ СОБЫТИЯ" =====
     function showEvents() {
         currentView = 'events';
         setBackBtnVisible(true);
 
         let html = `<h2>📅 Мои события</h2>`;
+        html += renderTabs('mine');
         html += `<div class="events-list">`;
 
         if (!events || events.length === 0) {
             html += `<p>У тебя пока нет событий</p>`;
         } else {
             events.forEach(e => {
-                const icon = e.is_public ? '🌍' : '🔒';
-                const hiddenClass = e.is_hidden ? ' hidden-event' : '';
-                const hideLabel = e.is_hidden ? '👁 Показать' : '🚫 Скрыть';
-                const desc = e.description ? `<div class="event-card-desc">${escapeHtml(e.description)}</div>` : '';
-
-                html += `
-                    <div class="event-card${hiddenClass}" data-id="${e.id}">
-                        <div class="event-card-header" data-role="open-edit" data-id="${e.id}">
-                            <span class="event-icon">${icon}</span>
-                            <div class="event-card-info">
-                                <div class="event-card-name">${escapeHtml(e.name)}</div>
-                                <div class="event-card-date">${e.date}</div>
-                                ${desc}
-                            </div>
-                            <button class="event-menu-btn" data-role="toggle-menu" data-id="${e.id}">⋮</button>
-                        </div>
-                        <div class="event-menu" id="menu-${e.id}">
-                            <button data-role="edit" data-id="${e.id}">✏️ Редактировать</button>
-                            <button data-role="hide" data-id="${e.id}" data-hidden="${e.is_hidden ? 1 : 0}">${hideLabel}</button>
-                            <button class="danger" data-role="delete" data-id="${e.id}">🗑️ Удалить</button>
-                        </div>
-                    </div>
-                `;
+                html += renderEventCard(e, true);
             });
         }
 
@@ -207,46 +201,154 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('addEventBtn').addEventListener('click', openCreateScreen);
         document.getElementById('toggleHiddenBtn').addEventListener('click', toggleHidden);
+        setupEventCardHandlers(true);
+    }
 
-        document.querySelectorAll('[data-role="toggle-menu"]').forEach(btn => {
-            btn.addEventListener('click', function(ev) {
-                ev.stopPropagation();
-                const id = this.getAttribute('data-id');
-                const menu = document.getElementById('menu-' + id);
-                const isOpen = menu.style.display === 'flex';
-                document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none');
-                if (!isOpen) menu.style.display = 'flex';
+    // ===== ЭКРАН "ОБЩИЕ СОБЫТИЯ" =====
+    function showPublicEvents() {
+        currentView = 'public_events';
+        setBackBtnVisible(true);
+
+        let html = `<h2>🌍 Общие события</h2>`;
+        html += renderTabs('public');
+        html += `<div class="events-list">`;
+
+        if (!publicEvents || publicEvents.length === 0) {
+            html += `<p>Общих событий пока нет</p>`;
+        } else {
+            publicEvents.forEach(e => {
+                html += renderEventCard(e, false);
             });
-        });
+        }
 
+        html += `</div>`;
+        html += `<p style="font-size:12px; color:gray; text-align:center; margin-top:12px;">Все пользователи видят эти события</p>`;
+
+        render(html);
+        setupEventCardHandlers(false);
+    }
+
+    // ===== РЕНДЕР ВКЛАДОК =====
+    function renderTabs(active) {
+        const mineClass = active === 'mine' ? 'tab active' : 'tab';
+        const publicClass = active === 'public' ? 'tab active' : 'tab';
+        return `
+            <div class="tabs">
+                <button class="${mineClass}" id="tabMine">📅 Мои</button>
+                <button class="${publicClass}" id="tabPublic">🌍 Общие</button>
+            </div>
+        `;
+    }
+
+    // ===== РЕНДЕР КАРТОЧКИ СОБЫТИЯ =====
+    function renderEventCard(e, isMine) {
+        const icon = e.is_public ? '🌍' : '🔒';
+        const hiddenClass = e.is_hidden ? ' hidden-event' : '';
+        const hideLabel = e.is_hidden ? '👁 Показать' : '🚫 Скрыть';
+        const desc = e.description ? `<div class="event-card-desc">${escapeHtml(e.description)}</div>` : '';
+
+        // Миниатюра, если есть фото
+        let thumb = '';
+        if (e.image) {
+            thumb = `<img src="${API_URL}/api/uploads/${e.image}" class="event-thumb" alt="">`;
+        } else {
+            thumb = `<span class="event-icon">${icon}</span>`;
+        }
+
+        // Меню «⋮» только для своих событий
+        let menuBtn = '';
+        let menuBlock = '';
+        if (isMine) {
+            menuBtn = `<button class="event-menu-btn" data-role="toggle-menu" data-id="${e.id}">⋮</button>`;
+            menuBlock = `
+                <div class="event-menu" id="menu-${e.id}">
+                    <button data-role="edit" data-id="${e.id}">✏️ Редактировать</button>
+                    <button data-role="hide" data-id="${e.id}" data-hidden="${e.is_hidden ? 1 : 0}">${hideLabel}</button>
+                    <button class="danger" data-role="delete" data-id="${e.id}">🗑️ Удалить</button>
+                </div>
+            `;
+        }
+
+        // Для общих событий — показываем автора
+        let author = '';
+        if (!isMine && e.username) {
+            author = `<div class="event-card-author">от @${escapeHtml(e.username)}</div>`;
+        }
+
+        return `
+            <div class="event-card${hiddenClass}" data-id="${e.id}">
+                <div class="event-card-header" data-role="open-edit" data-id="${e.id}" data-mine="${isMine ? 1 : 0}">
+                    ${thumb}
+                    <div class="event-card-info">
+                        <div class="event-card-name">${escapeHtml(e.name)}</div>
+                        <div class="event-card-date">${e.date}</div>
+                        ${desc}
+                        ${author}
+                    </div>
+                    ${menuBtn}
+                </div>
+                ${menuBlock}
+            </div>
+        `;
+    }
+
+    // ===== ОБРАБОТЧИКИ КАРТОЧЕК =====
+    function setupEventCardHandlers(isMine) {
+        // Вкладки
+        const tabMine = document.getElementById('tabMine');
+        const tabPublic = document.getElementById('tabPublic');
+        if (tabMine) tabMine.addEventListener('click', showEvents);
+        if (tabPublic) tabPublic.addEventListener('click', showPublicEvents);
+
+        // Меню «⋮» (только для своих)
+        if (isMine) {
+            document.querySelectorAll('[data-role="toggle-menu"]').forEach(btn => {
+                btn.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                    const id = this.getAttribute('data-id');
+                    const menu = document.getElementById('menu-' + id);
+                    const isOpen = menu.style.display === 'flex';
+                    document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none');
+                    if (!isOpen) menu.style.display = 'flex';
+                });
+            });
+
+            document.querySelectorAll('[data-role="edit"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openEditScreen(this.getAttribute('data-id'));
+                });
+            });
+
+            document.querySelectorAll('[data-role="hide"]').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = this.getAttribute('data-id');
+                    const isHidden = this.getAttribute('data-hidden') === '1';
+                    await hideEventApi(id, !isHidden);
+                    await fetchAllData();
+                });
+            });
+
+            document.querySelectorAll('[data-role="delete"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const ev = events.find(e => e.id == id);
+                    if (ev) openConfirmDelete(ev);
+                });
+            });
+        }
+
+        // Клик по карточке (открыть просмотр)
         document.querySelectorAll('[data-role="open-edit"]').forEach(el => {
             el.addEventListener('click', function(ev) {
                 if (ev.target.closest('[data-role="toggle-menu"]')) return;
                 const id = this.getAttribute('data-id');
-                openEditScreen(id);
-            });
-        });
-
-        document.querySelectorAll('[data-role="edit"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                openEditScreen(this.getAttribute('data-id'));
-            });
-        });
-
-        document.querySelectorAll('[data-role="hide"]').forEach(btn => {
-            btn.addEventListener('click', async function() {
-                const id = this.getAttribute('data-id');
-                const isHidden = this.getAttribute('data-hidden') === '1';
-                await hideEventApi(id, !isHidden);
-                await fetchAllData();
-            });
-        });
-
-        document.querySelectorAll('[data-role="delete"]').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                const ev = events.find(e => e.id == id);
-                if (ev) openConfirmDelete(ev);
+                const mine = this.getAttribute('data-mine') === '1';
+                if (mine) {
+                    openEditScreen(id);
+                } else {
+                    // Просмотр чужого события (только чтение)
+                    openViewScreen(id);
+                }
             });
         });
     }
@@ -256,17 +358,41 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAllData();
     }
 
+    // ===== ПРОСМОТР ЧУЖОГО СОБЫТИЯ =====
+    function openViewScreen(id) {
+        const ev = publicEvents.find(e => e.id == id);
+        if (!ev) return;
+        currentView = 'edit';
+        setBackBtnVisible(true);
+
+        const img = ev.image ? `<img src="${API_URL}/api/uploads/${ev.image}" class="event-full-image" alt="">` : '';
+        const desc = ev.description ? `<p>${escapeHtml(ev.description)}</p>` : '';
+
+        render(`
+            <h2>🌍 ${escapeHtml(ev.name)}</h2>
+            ${img}
+            <p><b>📅 Дата:</b> ${ev.date}</p>
+            ${desc ? `<p><b>📝 Описание:</b></p>${desc}` : ''}
+            <p style="font-size:12px; color:gray;">от @${escapeHtml(ev.username || 'неизвестный')}</p>
+            <button class="action-btn secondary" id="backToListBtn">🔙 К списку</button>
+        `);
+
+        document.getElementById('backToListBtn').addEventListener('click', showPublicEvents);
+    }
+
     // ===== ЭКРАН РЕДАКТИРОВАНИЯ / СОЗДАНИЯ =====
     function openCreateScreen() {
         editingEventId = null;
+        editingImageFilename = '';
         currentView = 'edit';
         renderEditScreen(null);
     }
 
     function openEditScreen(id) {
         editingEventId = parseInt(id);
-        currentView = 'edit';
         const ev = events.find(e => e.id == editingEventId);
+        editingImageFilename = ev ? (ev.image || '') : '';
+        currentView = 'edit';
         renderEditScreen(ev);
     }
 
@@ -287,8 +413,26 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPublic = ev ? ev.is_public : false;
         const descLen = desc.length;
 
+        // Блок с фото
+        let imageBlock = '';
+        if (editingImageFilename) {
+            imageBlock = `
+                <img src="${API_URL}/api/uploads/${editingImageFilename}" class="event-preview-image" alt="">
+                <button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>
+            `;
+        } else {
+            imageBlock = `<p style="font-size:13px; color:gray;">Фото не загружено</p>`;
+        }
+
         render(`
             <h2>${title}</h2>
+
+            <div class="form-group">
+                <label>📷 Фото события</label>
+                <div id="imagePreviewContainer">${imageBlock}</div>
+                <input type="file" id="edit-image-input" accept="image/*" style="display:none;">
+                <button type="button" class="action-btn" id="uploadImageBtn" style="margin-top:8px;">📷 Загрузить фото</button>
+            </div>
 
             <div class="form-group">
                 <label>Название</label>
@@ -318,11 +462,65 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="action-btn secondary" id="cancelEditBtn">❌ Отмена</button>
         `);
 
+        // Счётчик символов
         const descEl = document.getElementById('edit-desc');
         const counter = document.getElementById('charCounter');
         descEl.addEventListener('input', function() {
             counter.textContent = this.value.length + ' / 200';
         });
+
+        // Загрузка фото
+        const fileInput = document.getElementById('edit-image-input');
+        const uploadBtn = document.getElementById('uploadImageBtn');
+
+        uploadBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', async function() {
+            const file = this.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Фото слишком большое. Максимум 5 МБ.');
+                return;
+            }
+
+            uploadBtn.textContent = '⏳ Загрузка...';
+            uploadBtn.disabled = true;
+
+            const result = await uploadImageApi(file);
+            if (result.success) {
+                editingImageFilename = result.filename;
+                // Обновляем превью
+                const container = document.getElementById('imagePreviewContainer');
+                container.innerHTML = `
+                    <img src="${API_URL}/api/uploads/${editingImageFilename}" class="event-preview-image" alt="">
+                    <button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>
+                `;
+                document.getElementById('removeImageBtn').addEventListener('click', function() {
+                    editingImageFilename = '';
+                    const c = document.getElementById('imagePreviewContainer');
+                    c.innerHTML = `<p style="font-size:13px; color:gray;">Фото не загружено</p>`;
+                });
+            } else {
+                alert('Ошибка загрузки: ' + (result.error || 'неизвестная'));
+            }
+
+            uploadBtn.textContent = '📷 Загрузить фото';
+            uploadBtn.disabled = false;
+            fileInput.value = '';
+        });
+
+        // Удаление уже загруженного фото
+        const removeBtn = document.getElementById('removeImageBtn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                editingImageFilename = '';
+                const c = document.getElementById('imagePreviewContainer');
+                c.innerHTML = `<p style="font-size:13px; color:gray;">Фото не загружено</p>`;
+            });
+        }
 
         document.getElementById('saveBtn').addEventListener('click', saveEvent);
         document.getElementById('cancelEditBtn').addEventListener('click', function() {
@@ -347,20 +545,27 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        const payload = {
+            name,
+            date,
+            is_public: isPublic,
+            description,
+            image: editingImageFilename || ''
+        };
+
         if (editingEventId) {
-            await updateEventApi(editingEventId, { name, date, is_public: isPublic, description });
+            await updateEventApi(editingEventId, payload);
         } else {
-            await addEventApi({ name, date, is_public: isPublic, description });
+            await addEventApi(payload);
         }
 
         editingEventId = null;
+        editingImageFilename = '';
         currentView = 'events';
         await fetchAllData();
     }
 
     // ===== ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ =====
-    let pendingDeleteId = null;
-
     function openConfirmDelete(ev) {
         pendingDeleteId = ev.id;
         document.getElementById('confirmText').textContent = `«${ev.name}» — ${ev.date}`;

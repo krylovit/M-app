@@ -312,3 +312,63 @@ nav button:active {
     background: #d9342b;
     color: #ffffff;
 }
+
+/* ==== ВКЛАДКИ (Мои / Общие) ==== */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.tab {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--tg-theme-hint-color, #666);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.tab.active {
+    background: var(--tg-theme-button-color, #0088cc);
+    color: var(--tg-theme-button-text-color, #ffffff);
+    border-color: var(--tg-theme-button-color, #0088cc);
+}
+
+/* ==== МИНИАТЮРА ФОТО В КАРТОЧКЕ ==== */
+.event-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+/* ==== АВТОР ОБЩЕГО СОБЫТИЯ ==== */
+.event-card-author {
+    font-size: 11px;
+    color: var(--tg-theme-link-color, #0088cc);
+    margin-top: 3px;
+}
+
+/* ==== ПРЕВЬЮ ФОТО В ФОРМЕ ==== */
+.event-preview-image {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-top: 8px;
+}
+
+/* ==== БОЛЬШОЕ ФОТО НА ЭКРАНЕ ПРОСМОТРА ==== */
+.event-full-image {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
