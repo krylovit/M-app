@@ -12,9 +12,13 @@ document.addEventListener('DOMContentLoaded', function() {
         tg = { ready: function() {}, expand: function() {} };
     }
 
-    // ===== АДРЕС API =====
-    // Пока локально, для теста в браузере
-    const API_URL = 'http://localhost:5000';
+    // ===== АДРЕС API (ngrok) =====
+    const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
+
+    // Заголовок для обхода предупреждения ngrok
+    const HEADERS = {
+        'ngrok-skip-browser-warning': 'true'
+    };
 
     // ===== СОСТОЯНИЕ =====
     let events = [];
@@ -23,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let mouseDay = null;
     let currentView = 'main';
 
-    // ===== ФУНКЦИЯ ПОЛУЧЕНИЯ user_id =====
+    // ===== ПОЛУЧЕНИЕ user_id =====
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
             return tg.initDataUnsafe.user.id;
@@ -35,14 +39,15 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchAllData() {
         try {
             const user_id = getUserId();
-            const response = await fetch(`${API_URL}/api/all?user_id=${user_id}`);
+            const response = await fetch(`${API_URL}/api/all?user_id=${user_id}`, {
+                headers: HEADERS
+            });
             const data = await response.json();
             console.log('📥 Получены данные от API:', data);
             rates = data.rates;
             weather = data.weather;
             events = data.events;
             mouseDay = data.mouseDay;
-            // Обновляем текущий экран
             if (currentView === 'rates') showRates();
             else if (currentView === 'weather') showWeather();
             else if (currentView === 'events') showEvents();
@@ -57,12 +62,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const user_id = getUserId();
             const response = await fetch(`${API_URL}/api/add_event`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
                 body: JSON.stringify({ user_id, name, date, is_public: isPublic })
             });
             const result = await response.json();
             if (result.success) {
-                await fetchAllData(); // обновить все данные
+                await fetchAllData();
             }
         } catch (e) {
             console.error('❌ Ошибка добавления события:', e);
@@ -191,5 +199,5 @@ document.addEventListener('DOMContentLoaded', function() {
     showMainMenu();
     setupNavigation();
 
-    console.log('🚀 Приложение инициализировано');
+    console.log('🚀 Приложение инициализировано. API:', API_URL);
 });
