@@ -12,11 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
         tg = { ready: function() {}, expand: function() {} };
     }
 
-    // ===== КОНФИГУРАЦИЯ API =====
-    // Для локального теста в браузере (на этом же компьютере):
-    const API_URL = 'http://localhost:5000';
-    // Для теста в Telegram на телефоне замени на свой ngrok URL, например:
-    // const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
+    // ===== АДРЕС API (ngrok - работает и в браузере, и в Telegram) =====
+    const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
 
     const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
@@ -27,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let mouseDay = null;
     let currentView = 'main';
     let showHidden = false;
-    let editingEventId = null; // null = создаём новое, число = редактируем
+    let editingEventId = null;
 
     // ===== УТИЛИТЫ =====
     function getUserId() {
@@ -208,7 +205,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         render(html);
 
-        // Навешиваем обработчики
         document.getElementById('addEventBtn').addEventListener('click', openCreateScreen);
         document.getElementById('toggleHiddenBtn').addEventListener('click', toggleHidden);
 
@@ -218,16 +214,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const id = this.getAttribute('data-id');
                 const menu = document.getElementById('menu-' + id);
                 const isOpen = menu.style.display === 'flex';
-                // Закрываем все меню
                 document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none');
-                // Открываем это, если было закрыто
                 if (!isOpen) menu.style.display = 'flex';
             });
         });
 
         document.querySelectorAll('[data-role="open-edit"]').forEach(el => {
             el.addEventListener('click', function(ev) {
-                // Если кликнули именно по кнопке ⋮, игнорируем
                 if (ev.target.closest('[data-role="toggle-menu"]')) return;
                 const id = this.getAttribute('data-id');
                 openEditScreen(id);
@@ -325,7 +318,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="action-btn secondary" id="cancelEditBtn">❌ Отмена</button>
         `);
 
-        // Счётчик символов
         const descEl = document.getElementById('edit-desc');
         const counter = document.getElementById('charCounter');
         descEl.addEventListener('input', function() {
@@ -350,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Простая проверка даты
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             alert('Неверный формат даты. Используй ГГГГ-ММ-ДД');
             return;
@@ -426,5 +417,5 @@ document.addEventListener('DOMContentLoaded', function() {
     showMainMenu();
     setupNavigation();
 
-    console.log('🚀 Приложение инициализировано');
+    console.log('🚀 Приложение инициализировано. API:', API_URL);
 });
