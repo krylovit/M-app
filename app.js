@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    // ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -9,13 +9,12 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('✅ Telegram WebApp инициализирован');
     } else {
         console.warn('⚠️ Telegram WebApp не найден, работаем в браузере');
-        tg = {
-            ready: function() {},
-            expand: function() {},
-            sendData: function(data) { console.log('Отправка (заглушка):', data); },
-            onEvent: function() {}
-        };
+        tg = { ready: function() {}, expand: function() {} };
     }
+
+    // ===== АДРЕС API =====
+    // Пока локально, для теста в браузере
+    const API_URL = 'http://localhost:5000';
 
     // ===== СОСТОЯНИЕ =====
     let events = [];
@@ -24,65 +23,50 @@ document.addEventListener('DOMContentLoaded', function() {
     let mouseDay = null;
     let currentView = 'main';
 
-    // ===== ОТПРАВКА БОТУ =====
-    function sendToBot(action, payload = {}) {
-        const data = JSON.stringify({ action, ...payload });
-        if (tg) {
-            tg.sendData(data);
-            console.log('📤 Отправлено боту:', data);
+    // ===== ФУНКЦИЯ ПОЛУЧЕНИЯ user_id =====
+    function getUserId() {
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            return tg.initDataUnsafe.user.id;
+        }
+        return 0;
+    }
+
+    // ===== ЗАПРОСЫ К API =====
+    async function fetchAllData() {
+        try {
+            const user_id = getUserId();
+            const response = await fetch(`${API_URL}/api/all?user_id=${user_id}`);
+            const data = await response.json();
+            console.log('📥 Получены данные от API:', data);
+            rates = data.rates;
+            weather = data.weather;
+            events = data.events;
+            mouseDay = data.mouseDay;
+            // Обновляем текущий экран
+            if (currentView === 'rates') showRates();
+            else if (currentView === 'weather') showWeather();
+            else if (currentView === 'events') showEvents();
+            else if (currentView === 'mouse') showMouseDay();
+        } catch (e) {
+            console.error('❌ Ошибка запроса к API:', e);
         }
     }
 
-    function fetchAllData() { sendToBot('get_all_data'); }
-    function fetchRates() { sendToBot('get_rates'); }
-    function fetchWeather() { sendToBot('get_weather'); }
-    function fetchEvents() { sendToBot('get_events'); }
-    function addEventToBot(name, date, isPublic) {
-        sendToBot('add_event', { name, date, is_public: isPublic });
-    }
-
-    // ===== ПРИЁМ ОТВЕТОВ =====
-    if (tg) {
-        tg.onEvent('data', function(data) {
-            try {
-                const response = JSON.parse(data);
-                console.log('📥 Получено от бота:', response);
-                handleBotResponse(response);
-            } catch (e) {
-                console.error('❌ Ошибка парсинга ответа бота:', e);
+    async function addEventToBot(name, date, isPublic) {
+        try {
+            const user_id = getUserId();
+            const response = await fetch(`${API_URL}/api/add_event`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id, name, date, is_public: isPublic })
+            });
+            const result = await response.json();
+            if (result.success) {
+                await fetchAllData(); // обновить все данные
             }
-        });
-    }
-
-    function handleBotResponse(response) {
-        const { action, payload } = response;
-        switch (action) {
-            case 'get_all_data':
-                if (payload.rates) rates = payload.rates;
-                if (payload.weather) weather = payload.weather;
-                if (payload.events) events = payload.events;
-                if (payload.mouseDay !== undefined) mouseDay = payload.mouseDay;
-                break;
-            case 'get_rates':
-                if (payload) rates = payload;
-                break;
-            case 'get_weather':
-                if (payload) weather = payload;
-                break;
-            case 'get_events':
-                if (payload) events = payload;
-                break;
-            case 'add_event':
-                if (payload && payload.success) fetchEvents();
-                break;
-            default:
-                console.warn('⚠️ Неизвестный action:', action);
+        } catch (e) {
+            console.error('❌ Ошибка добавления события:', e);
         }
-        // Перерисовываем текущий экран
-        if (currentView === 'rates') showRates();
-        else if (currentView === 'weather') showWeather();
-        else if (currentView === 'events') showEvents();
-        else if (currentView === 'main') showMainMenu();
     }
 
     // ===== ОТОБРАЖЕНИЕ =====
@@ -107,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('backBtn').style.display = 'block';
         if (!rates) {
             render(`<h2>💵 Курсы валют</h2><p>Загрузка...</p>`);
-            fetchRates();
+            fetchAllData();
             return;
         }
         render(`
@@ -124,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('backBtn').style.display = 'block';
         if (!weather) {
             render(`<h2>🌴 Погода на Кочанге</h2><p>Загрузка...</p>`);
-            fetchWeather();
+            fetchAllData();
             return;
         }
         render(`
@@ -148,16 +132,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function showEvents() {
         currentView = 'events';
         document.getElementById('backBtn').style.display = 'block';
-        if (!events || events.length === 0) {
+        if (!events) {
             render(`<h2>📅 Мои события</h2><p>Загрузка...</p>`);
-            fetchEvents();
+            fetchAllData();
             return;
         }
         let html = `<h2>📅 Мои события</h2>`;
-        events.forEach(e => {
-            const icon = e.is_public ? '🌍' : '🔒';
-            html += `<div class="event-item">${icon} <b>${e.name}</b> — ${e.date}</div>`;
-        });
+        if (events.length === 0) {
+            html += `<p>У тебя пока нет событий</p>`;
+        } else {
+            events.forEach(e => {
+                const icon = e.is_public ? '🌍' : '🔒';
+                html += `<div class="event-item">${icon} <b>${e.name}</b> — ${e.date}</div>`;
+            });
+        }
         html += `
             <div style="margin-top:16px;">
                 <button id="addEventBtn" style="padding:10px 20px; border:none; border-radius:10px; background:var(--tg-theme-button-color, #0088cc); color:#fff; font-weight:600; cursor:pointer; width:100%;">
@@ -180,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showMainMenu();
     }
 
-    // ===== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ ПО data-action =====
+    // ===== НАВЕШИВАНИЕ ОБРАБОТЧИКОВ =====
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
         if (!nav) return;
