@@ -16,6 +16,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
     const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
+    // ===== АНИМАЦИИ "ДЕНЬ МЫШИ" =====
+    const MOUSE_ANIMATIONS = [
+        'animations/mouse-scroll.json',
+        'animations/mouse-move.json',
+        'animations/running-mouse.json'
+    ];
+
+    // Фразы загружаются из phrases.json (см. loadPhrases ниже)
+    let MOUSE_PHRASES = ['🐭 Привет!'];
+
     // ===== СОСТОЯНИЕ =====
     let events = [];
     let publicEvents = [];
@@ -27,9 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let editingEventId = null;
     let editingImageFilename = '';
     let pendingDeleteId = null;
+    let lottieAnimation = null;
 
-    // ===== КЭШ КАРТИНОК (blob-URL) =====
-    // Ключ: имя файла, значение: blob-URL для <img src="">
     const imageCache = {};
 
     // ===== УТИЛИТЫ =====
@@ -55,8 +64,28 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('backBtn').style.display = visible ? 'block' : 'none';
     }
 
-    // ===== ЗАГРУЗКА КАРТИНКИ КАК BLOB =====
-    // Загружаем файл через fetch с нужным заголовком, превращаем в blob-URL
+    function stopLottie() {
+        if (lottieAnimation) {
+            lottieAnimation.destroy();
+            lottieAnimation = null;
+        }
+    }
+
+    // ===== ЗАГРУЗКА ФРАЗ ИЗ JSON =====
+    async function loadPhrases() {
+        try {
+            const response = await fetch('phrases.json?v=' + Date.now());
+            const data = await response.json();
+            if (data.mouse_phrases && Array.isArray(data.mouse_phrases) && data.mouse_phrases.length > 0) {
+                MOUSE_PHRASES = data.mouse_phrases;
+                console.log('✅ Фразы загружены:', MOUSE_PHRASES.length);
+            }
+        } catch (e) {
+            console.warn('⚠️ Не удалось загрузить phrases.json, использую дефолт:', e);
+        }
+    }
+
+    // ===== ЗАГРУЗКА КАРТИНОК =====
     async function getImageUrl(filename) {
         if (!filename) return '';
         if (imageCache[filename]) return imageCache[filename];
@@ -76,7 +105,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Предзагрузка всех картинок перед отрисовкой
     async function preloadAllImages() {
         const allImages = new Set();
         events.forEach(e => { if (e.image) allImages.add(e.image); });
@@ -98,9 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
             publicEvents = data.public_events || [];
             mouseDay = data.mouseDay;
 
-            // Предзагружаем все картинки
             await preloadAllImages();
-
             renderCurrentView();
         } catch (e) {
             console.error('❌ Ошибка запроса к API:', e);
@@ -155,6 +181,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== ВИДЫ =====
     function renderCurrentView() {
+        if (currentView !== 'mouse') stopLottie();
+
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'mouse') showMouseDay();
@@ -166,6 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showMainMenu() {
         currentView = 'main';
+        stopLottie();
         setBackBtnVisible(false);
         render(`<p>👋 Выбери раздел выше</p>`);
     }
@@ -201,17 +230,43 @@ document.addEventListener('DOMContentLoaded', function() {
         `);
     }
 
+    // ===== ДЕНЬ МЫШИ С LOTTIE =====
     function showMouseDay() {
         currentView = 'mouse';
         setBackBtnVisible(true);
+
         const days = mouseDay !== null ? mouseDay : '...';
+        const randomPhrase = MOUSE_PHRASES[Math.floor(Math.random() * MOUSE_PHRASES.length)];
+        const randomAnimation = MOUSE_ANIMATIONS[Math.floor(Math.random() * MOUSE_ANIMATIONS.length)];
+
         render(`
             <h2>🐭 День мыши</h2>
-            <p>До 13 февраля осталось <b>${days}</b> дней</p>
+            <div id="mouse-animation-container" style="width: 100%; max-width: 320px; height: 220px; margin: 10px auto;"></div>
+            <p style="text-align: center; font-size: 18px; margin-top: 16px;">
+                До 13 февраля осталось <b>${days}</b> дней
+            </p>
+            <p style="text-align: center; font-style: italic; color: var(--tg-theme-hint-color, #666); margin-top: 10px;">
+                ${randomPhrase}
+            </p>
         `);
+
+        const container = document.getElementById('mouse-animation-container');
+        if (container && window.lottie) {
+            stopLottie();
+            lottieAnimation = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: randomAnimation
+            });
+            console.log('🎬 Lottie:', randomAnimation);
+        } else {
+            console.warn('⚠️ Lottie не загружен или контейнер не найден');
+        }
     }
 
-    // ===== ЭКРАН "МОИ СОБЫТИЯ" =====
+    // ===== МОИ СОБЫТИЯ =====
     function showEvents() {
         currentView = 'events';
         setBackBtnVisible(true);
@@ -241,7 +296,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventCardHandlers(true);
     }
 
-    // ===== ЭКРАН "ОБЩИЕ СОБЫТИЯ" =====
     function showPublicEvents() {
         currentView = 'public_events';
         setBackBtnVisible(true);
@@ -265,7 +319,6 @@ document.addEventListener('DOMContentLoaded', function() {
         setupEventCardHandlers(false);
     }
 
-    // ===== РЕНДЕР ВКЛАДОК =====
     function renderTabs(active) {
         const mineClass = active === 'mine' ? 'tab active' : 'tab';
         const publicClass = active === 'public' ? 'tab active' : 'tab';
@@ -277,14 +330,12 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // ===== РЕНДЕР КАРТОЧКИ СОБЫТИЯ =====
     function renderEventCard(e, isMine) {
         const icon = e.is_public ? '🌍' : '🔒';
         const hiddenClass = e.is_hidden ? ' hidden-event' : '';
         const hideLabel = e.is_hidden ? '👁 Показать' : '🚫 Скрыть';
         const desc = e.description ? `<div class="event-card-desc">${escapeHtml(e.description)}</div>` : '';
 
-        // Миниатюра: используем blob-URL из кэша
         let thumb = '';
         if (e.image && imageCache[e.image]) {
             thumb = `<img src="${imageCache[e.image]}" class="event-thumb" alt="">`;
@@ -327,7 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
     }
 
-    // ===== ОБРАБОТЧИКИ КАРТОЧЕК =====
     function setupEventCardHandlers(isMine) {
         const tabMine = document.getElementById('tabMine');
         const tabPublic = document.getElementById('tabPublic');
@@ -389,7 +439,6 @@ document.addEventListener('DOMContentLoaded', function() {
         fetchAllData();
     }
 
-    // ===== ПРОСМОТР ЧУЖОГО СОБЫТИЯ =====
     function openViewScreen(id) {
         const ev = publicEvents.find(e => e.id == id);
         if (!ev) return;
@@ -415,7 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('backToListBtn').addEventListener('click', showPublicEvents);
     }
 
-    // ===== ЭКРАН РЕДАКТИРОВАНИЯ / СОЗДАНИЯ =====
     function openCreateScreen() {
         editingEventId = null;
         editingImageFilename = '';
@@ -448,7 +496,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPublic = ev ? ev.is_public : false;
         const descLen = desc.length;
 
-        // Блок с фото — используем blob-URL из кэша
         let imageBlock = '';
         if (editingImageFilename && imageCache[editingImageFilename]) {
             imageBlock = `
@@ -525,7 +572,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await uploadImageApi(file);
             if (result.success) {
                 editingImageFilename = result.filename;
-                // Для превью используем локальный blob из файла — не надо фетчить с API
                 const localUrl = URL.createObjectURL(file);
                 imageCache[editingImageFilename] = localUrl;
 
@@ -600,7 +646,6 @@ document.addEventListener('DOMContentLoaded', function() {
         await fetchAllData();
     }
 
-    // ===== ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ =====
     function openConfirmDelete(ev) {
         pendingDeleteId = ev.id;
         document.getElementById('confirmText').textContent = `«${ev.name}» — ${ev.date}`;
@@ -621,15 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
         await fetchAllData();
     });
 
-    // ===== ЗАКРЫТИЕ МЕНЮ ПРИ КЛИКЕ ВНЕ =====
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.event-menu') && !e.target.closest('[data-role="toggle-menu"]')) {
             document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none');
         }
     });
 
-    // ===== КНОПКА НАЗАД =====
     document.getElementById('backBtn').addEventListener('click', function() {
+        stopLottie();
         if (currentView === 'edit') {
             currentView = 'events';
             showEvents();
@@ -638,7 +682,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ===== НАВИГАЦИЯ =====
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
         if (!nav) return;
@@ -653,9 +696,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ===== СТАРТ =====
-    fetchAllData();
-    showMainMenu();
-    setupNavigation();
+    async function init() {
+        await loadPhrases();   // сначала фразы
+        await fetchAllData();  // потом данные
+        showMainMenu();
+        setupNavigation();
+    }
+    init();
 
     console.log('🚀 Приложение инициализировано. API:', API_URL);
 });
