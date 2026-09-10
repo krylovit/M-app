@@ -25,8 +25,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentView = 'main';
     let showHidden = false;
     let editingEventId = null;
-    let editingImageFilename = '';  // Имя файла фото (текущее или новое)
+    let editingImageFilename = '';
     let pendingDeleteId = null;
+
+    // ===== КЭШ КАРТИНОК (blob-URL) =====
+    // Ключ: имя файла, значение: blob-URL для <img src="">
+    const imageCache = {};
 
     // ===== УТИЛИТЫ =====
     function getUserId() {
@@ -51,6 +55,35 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('backBtn').style.display = visible ? 'block' : 'none';
     }
 
+    // ===== ЗАГРУЗКА КАРТИНКИ КАК BLOB =====
+    // Загружаем файл через fetch с нужным заголовком, превращаем в blob-URL
+    async function getImageUrl(filename) {
+        if (!filename) return '';
+        if (imageCache[filename]) return imageCache[filename];
+
+        try {
+            const response = await fetch(`${API_URL}/api/uploads/${filename}`, {
+                headers: HEADERS
+            });
+            if (!response.ok) return '';
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            imageCache[filename] = url;
+            return url;
+        } catch (e) {
+            console.error('❌ Ошибка загрузки фото:', filename, e);
+            return '';
+        }
+    }
+
+    // Предзагрузка всех картинок перед отрисовкой
+    async function preloadAllImages() {
+        const allImages = new Set();
+        events.forEach(e => { if (e.image) allImages.add(e.image); });
+        publicEvents.forEach(e => { if (e.image) allImages.add(e.image); });
+        await Promise.all([...allImages].map(getImageUrl));
+    }
+
     // ===== API =====
     async function fetchAllData() {
         try {
@@ -64,6 +97,10 @@ document.addEventListener('DOMContentLoaded', function() {
             events = data.events;
             publicEvents = data.public_events || [];
             mouseDay = data.mouseDay;
+
+            // Предзагружаем все картинки
+            await preloadAllImages();
+
             renderCurrentView();
         } catch (e) {
             console.error('❌ Ошибка запроса к API:', e);
@@ -247,15 +284,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const hideLabel = e.is_hidden ? '👁 Показать' : '🚫 Скрыть';
         const desc = e.description ? `<div class="event-card-desc">${escapeHtml(e.description)}</div>` : '';
 
-        // Миниатюра, если есть фото
+        // Миниатюра: используем blob-URL из кэша
         let thumb = '';
-        if (e.image) {
-            thumb = `<img src="${API_URL}/api/uploads/${e.image}" class="event-thumb" alt="">`;
+        if (e.image && imageCache[e.image]) {
+            thumb = `<img src="${imageCache[e.image]}" class="event-thumb" alt="">`;
         } else {
             thumb = `<span class="event-icon">${icon}</span>`;
         }
 
-        // Меню «⋮» только для своих событий
         let menuBtn = '';
         let menuBlock = '';
         if (isMine) {
@@ -269,7 +305,6 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
 
-        // Для общих событий — показываем автора
         let author = '';
         if (!isMine && e.username) {
             author = `<div class="event-card-author">от @${escapeHtml(e.username)}</div>`;
@@ -294,13 +329,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== ОБРАБОТЧИКИ КАРТОЧЕК =====
     function setupEventCardHandlers(isMine) {
-        // Вкладки
         const tabMine = document.getElementById('tabMine');
         const tabPublic = document.getElementById('tabPublic');
         if (tabMine) tabMine.addEventListener('click', showEvents);
         if (tabPublic) tabPublic.addEventListener('click', showPublicEvents);
 
-        // Меню «⋮» (только для своих)
         if (isMine) {
             document.querySelectorAll('[data-role="toggle-menu"]').forEach(btn => {
                 btn.addEventListener('click', function(ev) {
@@ -337,7 +370,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        // Клик по карточке (открыть просмотр)
         document.querySelectorAll('[data-role="open-edit"]').forEach(el => {
             el.addEventListener('click', function(ev) {
                 if (ev.target.closest('[data-role="toggle-menu"]')) return;
@@ -346,7 +378,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (mine) {
                     openEditScreen(id);
                 } else {
-                    // Просмотр чужого события (только чтение)
                     openViewScreen(id);
                 }
             });
@@ -365,7 +396,11 @@ document.addEventListener('DOMContentLoaded', function() {
         currentView = 'edit';
         setBackBtnVisible(true);
 
-        const img = ev.image ? `<img src="${API_URL}/api/uploads/${ev.image}" class="event-full-image" alt="">` : '';
+        let img = '';
+        if (ev.image && imageCache[ev.image]) {
+            img = `<img src="${imageCache[ev.image]}" class="event-full-image" alt="">`;
+        }
+
         const desc = ev.description ? `<p>${escapeHtml(ev.description)}</p>` : '';
 
         render(`
@@ -413,11 +448,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPublic = ev ? ev.is_public : false;
         const descLen = desc.length;
 
-        // Блок с фото
+        // Блок с фото — используем blob-URL из кэша
         let imageBlock = '';
-        if (editingImageFilename) {
+        if (editingImageFilename && imageCache[editingImageFilename]) {
             imageBlock = `
-                <img src="${API_URL}/api/uploads/${editingImageFilename}" class="event-preview-image" alt="">
+                <img src="${imageCache[editingImageFilename]}" class="event-preview-image" alt="">
                 <button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>
             `;
         } else {
@@ -462,14 +497,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="action-btn secondary" id="cancelEditBtn">❌ Отмена</button>
         `);
 
-        // Счётчик символов
         const descEl = document.getElementById('edit-desc');
         const counter = document.getElementById('charCounter');
         descEl.addEventListener('input', function() {
             counter.textContent = this.value.length + ' / 200';
         });
 
-        // Загрузка фото
         const fileInput = document.getElementById('edit-image-input');
         const uploadBtn = document.getElementById('uploadImageBtn');
 
@@ -492,10 +525,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await uploadImageApi(file);
             if (result.success) {
                 editingImageFilename = result.filename;
-                // Обновляем превью
+                // Для превью используем локальный blob из файла — не надо фетчить с API
+                const localUrl = URL.createObjectURL(file);
+                imageCache[editingImageFilename] = localUrl;
+
                 const container = document.getElementById('imagePreviewContainer');
                 container.innerHTML = `
-                    <img src="${API_URL}/api/uploads/${editingImageFilename}" class="event-preview-image" alt="">
+                    <img src="${localUrl}" class="event-preview-image" alt="">
                     <button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>
                 `;
                 document.getElementById('removeImageBtn').addEventListener('click', function() {
@@ -512,7 +548,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fileInput.value = '';
         });
 
-        // Удаление уже загруженного фото
         const removeBtn = document.getElementById('removeImageBtn');
         if (removeBtn) {
             removeBtn.addEventListener('click', function() {
