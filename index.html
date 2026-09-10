@@ -12,17 +12,32 @@
         <header>
             <h1>🐭 Мой помощник</h1>
         </header>
+
         <nav id="mainMenu">
             <button data-action="rates">💵 Курсы</button>
             <button data-action="weather">🌤️ Погода</button>
             <button data-action="mouse">🐭 День мыши</button>
             <button data-action="events">📅 События</button>
         </nav>
+
         <main id="content">
             <p>👋 Загрузка...</p>
         </main>
+
         <button id="backBtn" style="display:none;">🔙 Назад</button>
     </div>
-    <script src="app.js" charset="UTF-8"></script>
+
+    <div id="confirmModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h3>⚠️ Удалить событие?</h3>
+            <p id="confirmText">—</p>
+            <div class="modal-buttons">
+                <button id="confirmCancel" class="btn-secondary">Отмена</button>
+                <button id="confirmDelete" class="btn-danger">🗑️ Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
