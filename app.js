@@ -23,8 +23,18 @@ document.addEventListener('DOMContentLoaded', function() {
         'animations/running-mouse.json'
     ];
 
-    // Фразы загружаются из phrases.json (см. loadPhrases ниже)
     let MOUSE_PHRASES = ['🐭 Привет!'];
+
+    // ===== АНИМАЦИИ ПОГОДЫ =====
+    const WEATHER_ANIMATIONS = {
+        clearDay: 'animations/clear-day.json',
+        clearNight: 'animations/clear-night.json',
+        wind: 'animations/wind.json',
+        strongWind: 'animations/wind-beaufort-8.json',
+        rain: 'animations/rain.json',
+        thunderstorm: 'animations/thunderstorms.json',
+        hurricane: 'animations/hurricane.json'
+    };
 
     // ===== СОСТОЯНИЕ =====
     let events = [];
@@ -71,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ===== ЗАГРУЗКА ФРАЗ ИЗ JSON =====
+    // ===== ЗАГРУЗКА ФРАЗ =====
     async function loadPhrases() {
         try {
             const response = await fetch('phrases.json?v=' + Date.now());
@@ -81,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('✅ Фразы загружены:', MOUSE_PHRASES.length);
             }
         } catch (e) {
-            console.warn('⚠️ Не удалось загрузить phrases.json, использую дефолт:', e);
+            console.warn('⚠️ Не удалось загрузить phrases.json:', e);
         }
     }
 
@@ -91,9 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (imageCache[filename]) return imageCache[filename];
 
         try {
-            const response = await fetch(`${API_URL}/api/uploads/${filename}`, {
-                headers: HEADERS
-            });
+            const response = await fetch(`${API_URL}/api/uploads/${filename}`, { headers: HEADERS });
             if (!response.ok) return '';
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);
@@ -181,7 +189,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== ВИДЫ =====
     function renderCurrentView() {
-        if (currentView !== 'mouse') stopLottie();
+        if (currentView !== 'mouse' && currentView !== 'weather') stopLottie();
 
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
@@ -215,6 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
         `);
     }
 
+    // ===== ПОГОДА С LOTTIE-АНИМАЦИЕЙ =====
     function showWeather() {
         currentView = 'weather';
         setBackBtnVisible(true);
@@ -222,15 +231,78 @@ document.addEventListener('DOMContentLoaded', function() {
             render(`<h2>🌴 Погода на Кочанге</h2><p>Загрузка...</p>`);
             return;
         }
+
+        // Выбираем анимацию по данным
+        const animationPath = chooseWeatherAnimation(weather);
+
         render(`
             <h2>🌴 Погода на Кочанге</h2>
-            <p>🌡️ <b>${weather.temp}</b></p>
-            <p>💨 <b>${weather.wind}</b></p>
-            <p style="font-size:12px; color:gray; margin-top:10px;">Обновлено: ${new Date().toLocaleTimeString()}</p>
+            <div id="weather-animation-container" style="width: 100%; max-width: 320px; height: 220px; margin: 10px auto;"></div>
+            <p style="text-align: center; font-size: 17px;">
+                🌡️ <b>${weather.temp}</b>
+            </p>
+            <p style="text-align: center; font-size: 17px;">
+                💨 <b>${weather.wind}</b>
+            </p>
+            <p style="text-align: center; font-size: 12px; color: gray; margin-top: 12px;">
+                Обновлено: ${new Date().toLocaleTimeString()}
+            </p>
         `);
+
+        const container = document.getElementById('weather-animation-container');
+        if (container && window.lottie) {
+            stopLottie();
+            lottieAnimation = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',
+                loop: true,
+                autoplay: true,
+                path: animationPath
+            });
+            console.log('🎬 Погода Lottie:', animationPath);
+        }
     }
 
-    // ===== ДЕНЬ МЫШИ С LOTTIE =====
+    // ===== ЛОГИКА ВЫБОРА АНИМАЦИИ ПОГОДЫ =====
+    function chooseWeatherAnimation(w) {
+        const code = w.weather_code || 0;
+        const wind = w.wind_value || 0;
+        const isDay = w.is_day === 1;
+
+        // Гроза (95-99)
+        if (code >= 95 && code <= 99) {
+            return WEATHER_ANIMATIONS.thunderstorm;
+        }
+
+        // Ураган (ветер > 60 км/ч)
+        if (wind > 60) {
+            return WEATHER_ANIMATIONS.hurricane;
+        }
+
+        // Дождь / ливни (51-67, 80-82)
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
+            return WEATHER_ANIMATIONS.rain;
+        }
+
+        // Сильный ветер (40-60 км/ч)
+        if (wind > 40) {
+            return WEATHER_ANIMATIONS.strongWind;
+        }
+
+        // Умеренный ветер (20-40 км/ч)
+        if (wind > 20) {
+            return WEATHER_ANIMATIONS.wind;
+        }
+
+        // Ясно — день или ночь
+        if (isDay) {
+            return WEATHER_ANIMATIONS.clearDay;
+        } else {
+            return WEATHER_ANIMATIONS.clearNight;
+        }
+    }
+
+    // ===== ДЕНЬ МЫШИ =====
     function showMouseDay() {
         currentView = 'mouse';
         setBackBtnVisible(true);
@@ -261,8 +333,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 path: randomAnimation
             });
             console.log('🎬 Lottie:', randomAnimation);
-        } else {
-            console.warn('⚠️ Lottie не загружен или контейнер не найден');
         }
     }
 
@@ -697,8 +767,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== СТАРТ =====
     async function init() {
-        await loadPhrases();   // сначала фразы
-        await fetchAllData();  // потом данные
+        await loadPhrases();
+        await fetchAllData();
         showMainMenu();
         setupNavigation();
     }
