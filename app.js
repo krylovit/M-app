@@ -869,9 +869,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const pieces = parseCheckersFen(g.fen);
-        const legalMovesStr = JSON.stringify(g.legal_moves);
-        const piecesStr = JSON.stringify(pieces);
-        const fenStr = g.fen;
 
         let boardHtml = '<div class="checkers-board-wrapper"><div class="checkers-board">';
         for (let row = 0; row < 8; row++) {
@@ -907,17 +904,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         boardHtml += '</div></div>';
 
-        // ===== ОТЛАДОЧНАЯ ПЛАШКА =====
-        let debugHtml = `
-            <div style="background:rgba(255,46,99,0.15);border:1px solid #ff2e63;padding:10px;margin-top:12px;font-size:10px;color:#ff9aa9;border-radius:8px;word-break:break-all;line-height:1.5;">
-                <b>FEN:</b> ${escapeHtml(fenStr)}<br>
-                <b>my_color:</b> ${g.my_color}<br>
-                <b>is_my_turn:</b> ${g.is_my_turn}<br>
-                <b>legal_moves:</b> ${escapeHtml(legalMovesStr)}<br>
-                <b>pieces:</b> ${escapeHtml(piecesStr.substring(0, 400))}
-            </div>
-        `;
-
         let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:var(--text-dim); margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
 
         let buttonsHtml = '';
@@ -933,7 +919,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <h2>⚫ Шашки #${g.id}</h2>
             <p style="text-align:center; font-size:15px; font-weight:600; color:${statusColor}; margin-bottom:10px;">${statusText}</p>
             ${boardHtml}
-            ${debugHtml}
             ${opponentInfo}
             <div style="margin-top:16px;">${buttonsHtml}</div>
         `);
@@ -1029,13 +1014,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const g = currentCheckersGame;
         if (!g) return;
 
-        let actualMove = moveStr;
+        // Ищем точный ход в legal_moves
+        let actualMove = null;
         if (g.legal_moves) {
-            const found = g.legal_moves.find(m => {
+            actualMove = g.legal_moves.find(m => {
                 const parts = m.split(/[-x]/);
                 return parts[0] === String(from) && parts[parts.length - 1] === String(to);
             });
-            if (found) actualMove = found;
+        }
+
+        if (!actualMove) {
+            alert(`❌ Ход не найден: ${from}-${to}\nДоступные: ${JSON.stringify(g.legal_moves)}`);
+            return;
         }
 
         try {
@@ -1048,10 +1038,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 selectedCell = null;
                 await loadCheckersState(g.id);
             } else {
-                console.error('Ошибка хода:', d.error);
+                alert(`❌ Ошибка хода: ${d.error || 'unknown'}\nХод: ${actualMove}`);
                 await loadCheckersState(g.id);
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            alert(`❌ Сеть: ${e}`);
+        }
     }
 
     function startCheckersAutoRefresh(game_id) {
