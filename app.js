@@ -43,6 +43,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let gameRefreshTimer = null;
     let lastBoard = '';
 
+    let currentC4Game = null;
+    let c4RefreshTimer = null;
+    let lastC4Board = '';
+
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.id;
         return 0;
@@ -60,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function stopLottie() { if (lottieAnimation) { lottieAnimation.destroy(); lottieAnimation = null; } }
     function destroyChart() { if (currentChart) { currentChart.destroy(); currentChart = null; } }
     function stopGameTimer() { if (gameRefreshTimer) { clearInterval(gameRefreshTimer); gameRefreshTimer = null; } }
+    function stopC4Timer() { if (c4RefreshTimer) { clearInterval(c4RefreshTimer); c4RefreshTimer = null; } }
 
     function getCurrentRate(fromCur, toCur) {
         if (!rates) return null;
@@ -116,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderCurrentView() {
         if (currentView !== 'mouse' && currentView !== 'weather') stopLottie();
         if (currentView !== 'game_ttt') stopGameTimer();
+        if (currentView !== 'game_c4') stopC4Timer();
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'mouse') showMouseDay();
@@ -125,12 +131,13 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'chart') showChartScreen();
         else if (currentView === 'games') showGamesMenu();
         else if (currentView === 'game_ttt') showTicTacToe();
+        else if (currentView === 'game_c4') showConnectFour();
         else if (currentView === 'game_leaderboard') showLeaderboard();
         else showMainMenu();
     }
 
     function showMainMenu() {
-        currentView = 'main'; stopLottie(); destroyChart(); stopGameTimer(); setBackBtnVisible(false);
+        currentView = 'main'; stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer(); setBackBtnVisible(false);
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
@@ -285,16 +292,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showGamesMenu() {
-        currentView = 'games'; setBackBtnVisible(true); stopGameTimer();
+        currentView = 'games'; setBackBtnVisible(true); stopGameTimer(); stopC4Timer();
         render(`
             <h2>🎮 Игры</h2>
             <button class="action-btn" id="tttBtn">❌⭕ Крестики-нолики</button>
+            <button class="action-btn" id="c4Btn">🔴 4 в ряд</button>
             <button class="action-btn secondary" id="leaderboardBtn">🏆 Рейтинг</button>
         `);
         document.getElementById('tttBtn').addEventListener('click', () => { currentView = 'game_ttt'; showTicTacToe(); });
+        document.getElementById('c4Btn').addEventListener('click', () => { currentView = 'game_c4'; showConnectFour(); });
         document.getElementById('leaderboardBtn').addEventListener('click', () => { currentView = 'game_leaderboard'; showLeaderboard(); });
     }
 
+    // ===== КРЕСТИКИ-НОЛИКИ =====
     async function showTicTacToe() {
         currentView = 'game_ttt';
         setBackBtnVisible(true);
@@ -325,8 +335,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function createGame() {
         try {
             const r = await fetch(`${API_URL}/api/game/create`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
                 body: JSON.stringify({ user_id: getUserId() })
             });
             const d = await r.json();
@@ -337,8 +346,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function startBotGame() {
         try {
             const r = await fetch(`${API_URL}/api/game/start_bot`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
                 body: JSON.stringify({ user_id: getUserId() })
             });
             const d = await r.json();
@@ -362,7 +370,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGameBoard() {
         const g = currentGame;
         const board = g.board.split('');
-        const boardChanged = g.board !== lastBoard;
 
         let statusText = '', statusColor = 'gray';
         if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
@@ -375,15 +382,11 @@ document.addEventListener('DOMContentLoaded', function() {
             else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
         }
 
-        // Найти выигрышную линию
         let winningLine = null;
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         for (const line of WIN_LINES) {
             const [a, b, c] = line;
-            if (board[a] !== '-' && board[a] === board[b] && board[b] === board[c]) {
-                winningLine = line;
-                break;
-            }
+            if (board[a] !== '-' && board[a] === board[b] && board[b] === board[c]) { winningLine = line; break; }
         }
 
         let boardHtml = '<div class="ttt-board">';
@@ -417,8 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="margin-top:20px;">${buttonsHtml}</div>
         `);
 
-        // Анимация появления новой фигуры
-        if (boardChanged) {
+        if (g.board !== lastBoard) {
             document.querySelectorAll('.ttt-cell.x, .ttt-cell.o').forEach(cell => {
                 cell.style.animation = 'none';
                 setTimeout(() => { cell.style.animation = ''; }, 10);
@@ -431,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         const inviteBtn = document.getElementById('inviteBtn');
-        if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id));
+        if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id, 'ttt'));
         const cancelBtn = document.getElementById('cancelGameBtn');
         if (cancelBtn) cancelBtn.addEventListener('click', cancelCurrentGame);
         const newGameBtn = document.getElementById('newGameBtn');
@@ -447,8 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!g || g.status !== 'active' || !g.is_my_turn) return;
         try {
             const r = await fetch(`${API_URL}/api/game/move`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
                 body: JSON.stringify({ game_id: g.id, user_id: getUserId(), position: position })
             });
             const d = await r.json();
@@ -469,22 +470,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
-    function openInviteDialog(game_id) {
+    function openInviteDialog(game_id, game_type) {
         const username = prompt('Введи @username друга (без @):');
         if (!username) return;
-        sendInvite(game_id, username.replace('@', ''));
+        sendInvite(game_id, username.replace('@', ''), game_type);
     }
 
-    async function sendInvite(game_id, username) {
+    async function sendInvite(game_id, username, game_type) {
         try {
             const r = await fetch(`${API_URL}/api/game/invite`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ game_id: game_id, username: username, from_username: getUsername() })
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ game_id: game_id, username: username, from_username: getUsername(), game_type: game_type || 'ttt' })
             });
             const d = await r.json();
             if (!d.success) { alert('❌ Не удалось найти игрока: ' + (d.error || 'unknown')); return; }
-            alert(`✅ Приглашение отправлено @${d.invited_username}!\nДруг получит уведомление в боте.`);
+            alert(`✅ Приглашение отправлено @${d.invited_username}!`);
         } catch (e) { alert('Ошибка'); }
     }
 
@@ -495,10 +495,189 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTttLobby();
     }
 
+    // ===== 4 В РЯД =====
+    async function showConnectFour() {
+        currentView = 'game_c4';
+        setBackBtnVisible(true);
+        const user_id = getUserId();
+        try {
+            const r = await fetch(`${API_URL}/api/game/c4/my_active?user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+            if (d.success && d.games && d.games.length > 0) {
+                await loadC4State(d.games[0].id);
+            } else {
+                renderC4Lobby();
+            }
+        } catch (e) { renderC4Lobby(); }
+    }
+
+    function renderC4Lobby() {
+        render(`
+            <h2>🔴 4 в ряд</h2>
+            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">
+                Бросай фишки и собери 4 в ряд — по горизонтали, вертикали или диагонали
+            </p>
+            <button class="action-btn" id="createC4Btn">➕ Создать игру</button>
+            <button class="action-btn secondary" id="botC4Btn">🤖 Играть с ботом</button>
+        `);
+        document.getElementById('createC4Btn').addEventListener('click', createC4Game);
+        document.getElementById('botC4Btn').addEventListener('click', startC4BotGame);
+    }
+
+    async function createC4Game() {
+        try {
+            const r = await fetch(`${API_URL}/api/game/c4/create`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ user_id: getUserId() })
+            });
+            const d = await r.json();
+            if (d.success) await loadC4State(d.game_id);
+        } catch (e) { alert('Ошибка'); }
+    }
+
+    async function startC4BotGame() {
+        try {
+            const r = await fetch(`${API_URL}/api/game/c4/start_bot`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ user_id: getUserId() })
+            });
+            const d = await r.json();
+            if (d.success) await loadC4State(d.game_id);
+        } catch (e) { alert('Ошибка'); }
+    }
+
+    async function loadC4State(game_id) {
+        try {
+            const user_id = getUserId();
+            const r = await fetch(`${API_URL}/api/game/c4/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+            if (!d.success) { renderC4Lobby(); return; }
+            currentC4Game = d.game;
+            lastC4Board = '';
+            renderC4Board();
+            startC4AutoRefresh(game_id);
+        } catch (e) { renderC4Lobby(); }
+    }
+
+    function renderC4Board() {
+        const g = currentC4Game;
+        const board = g.board.split('');
+        const winningCells = g.winning_cells || [];
+
+        let statusText = '', statusColor = 'gray';
+        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
+        else if (g.status === 'active') {
+            if (g.is_my_turn) { statusText = '🎯 Твой ход — выбери столбец'; statusColor = '#27ae60'; }
+            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = '#e67e22'; }
+        } else if (g.status === 'finished') {
+            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = '#27ae60'; }
+            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = '#3498db'; }
+            else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
+        }
+
+        // Кнопки выбора столбца (сверху)
+        let controlsHtml = '<div class="c4-controls">';
+        for (let col = 0; col < 7; col++) {
+            // Проверяем, можно ли сюда бросить
+            let canDrop = false;
+            for (let row = 5; row >= 0; row--) {
+                if (board[row * 7 + col] === '-') { canDrop = true; break; }
+            }
+            const canClick = g.status === 'active' && g.is_my_turn && canDrop;
+            controlsHtml += `<button class="c4-column-btn" data-col="${col}" ${canClick ? '' : 'disabled'}>${canClick ? '↓' : ''}</button>`;
+        }
+        controlsHtml += '</div>';
+
+        // Поле
+        let boardHtml = '<div class="c4-board">';
+        for (let i = 0; i < 42; i++) {
+            const cell = board[i];
+            let cellClass = 'c4-cell';
+            if (cell === 'X') cellClass += ' x';
+            else if (cell === 'O') cellClass += ' o';
+            if (winningCells.includes(i)) cellClass += ' winning';
+            boardHtml += `<div class="${cellClass}"></div>`;
+        }
+        boardHtml += '</div>';
+
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
+
+        let buttonsHtml = '';
+        if (g.status === 'waiting') {
+            buttonsHtml = `<button class="action-btn" id="inviteC4Btn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelC4Btn">❌ Отменить</button>`;
+        } else if (g.status === 'finished') {
+            buttonsHtml = `<button class="action-btn" id="newC4Btn">🔄 Новая игра</button><button class="action-btn secondary" id="backToGamesC4Btn">🔙 К играм</button>`;
+        } else {
+            buttonsHtml = `<button class="action-btn secondary" id="leaveC4Btn">🚪 Выйти</button>`;
+        }
+
+        render(`
+            <h2>🔴 4 в ряд #${g.id}</h2>
+            <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:12px;">${statusText}</p>
+            ${controlsHtml}
+            ${boardHtml}
+            ${opponentInfo}
+            <div style="margin-top:20px;">${buttonsHtml}</div>
+        `);
+
+        if (g.board !== lastC4Board) {
+            document.querySelectorAll('.c4-cell.x, .c4-cell.o').forEach(cell => {
+                cell.style.animation = 'none';
+                setTimeout(() => { cell.style.animation = ''; }, 10);
+            });
+        }
+        lastC4Board = g.board;
+
+        document.querySelectorAll('.c4-column-btn:not([disabled])').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const col = parseInt(this.getAttribute('data-col'));
+                makeC4Move(col);
+            });
+        });
+
+        const inviteC4Btn = document.getElementById('inviteC4Btn');
+        if (inviteC4Btn) inviteC4Btn.addEventListener('click', () => openInviteDialog(g.id, 'c4'));
+        const cancelC4Btn = document.getElementById('cancelC4Btn');
+        if (cancelC4Btn) cancelC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
+        const newC4Btn = document.getElementById('newC4Btn');
+        if (newC4Btn) newC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
+        const backToGamesC4Btn = document.getElementById('backToGamesC4Btn');
+        if (backToGamesC4Btn) backToGamesC4Btn.addEventListener('click', () => { stopC4Timer(); showGamesMenu(); });
+        const leaveC4Btn = document.getElementById('leaveC4Btn');
+        if (leaveC4Btn) leaveC4Btn.addEventListener('click', () => { stopC4Timer(); showGamesMenu(); });
+    }
+
+    async function makeC4Move(col) {
+        const g = currentC4Game;
+        if (!g || g.status !== 'active' || !g.is_my_turn) return;
+        try {
+            const r = await fetch(`${API_URL}/api/game/c4/move`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ game_id: g.id, user_id: getUserId(), col: col })
+            });
+            const d = await r.json();
+            if (d.success) await loadC4State(g.id);
+        } catch (e) {}
+    }
+
+    function startC4AutoRefresh(game_id) {
+        stopC4Timer();
+        c4RefreshTimer = setInterval(async () => {
+            if (currentView !== 'game_c4') { stopC4Timer(); return; }
+            try {
+                const user_id = getUserId();
+                const r = await fetch(`${API_URL}/api/game/c4/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+                const d = await r.json();
+                if (d.success) { currentC4Game = d.game; renderC4Board(); }
+            } catch (e) {}
+        }, 3000);
+    }
+
+    // ===== РЕЙТИНГ =====
     async function showLeaderboard() {
         currentView = 'game_leaderboard';
         setBackBtnVisible(true);
-        stopGameTimer();
+        stopGameTimer(); stopC4Timer();
         render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray;">Загрузка...</p>`);
         try {
             const r = await fetch(`${API_URL}/api/game/leaderboard`, { headers: HEADERS });
@@ -523,6 +702,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) { render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:red;">Ошибка</p>`); }
     }
 
+    // ===== СОБЫТИЯ =====
     function showEvents() {
         currentView = 'events'; setBackBtnVisible(true);
         let html = `<h2>📅 Мои события</h2>${renderTabs('mine')}<div class="events-list">`;
@@ -670,10 +850,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) { if (!e.target.closest('.event-menu') && !e.target.closest('[data-role="toggle-menu"]')) document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none'); });
 
     document.getElementById('backBtn').addEventListener('click', function() {
-        stopLottie(); destroyChart(); stopGameTimer();
+        stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer();
         if (currentView === 'edit') { currentView = 'events'; showEvents(); }
         else if (currentView === 'chart') { currentView = 'rates'; showRates(); }
-        else if (currentView === 'game_ttt' || currentView === 'game_leaderboard') { currentView = 'games'; showGamesMenu(); }
+        else if (currentView === 'game_ttt' || currentView === 'game_c4' || currentView === 'game_leaderboard') { currentView = 'games'; showGamesMenu(); }
         else { showMainMenu(); }
     });
 
