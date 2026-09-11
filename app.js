@@ -48,6 +48,10 @@ document.addEventListener('DOMContentLoaded', function() {
     let c4RefreshTimer = null;
     let lastC4Board = '';
 
+    let currentCheckersGame = null;
+    let checkersRefreshTimer = null;
+    let selectedCell = null;
+
     let playerStats = { wins: 0, losses: 0, draws: 0, rating: 0 };
 
     function getUserId() {
@@ -76,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function destroyChart() { if (currentChart) { currentChart.destroy(); currentChart = null; } }
     function stopGameTimer() { if (gameRefreshTimer) { clearInterval(gameRefreshTimer); gameRefreshTimer = null; } }
     function stopC4Timer() { if (c4RefreshTimer) { clearInterval(c4RefreshTimer); c4RefreshTimer = null; } }
+    function stopCheckersTimer() { if (checkersRefreshTimer) { clearInterval(checkersRefreshTimer); checkersRefreshTimer = null; } }
 
     function getCurrentRate(fromCur, toCur) {
         if (!rates) return null;
@@ -142,6 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (currentView !== 'mouse' && currentView !== 'weather') stopLottie();
         if (currentView !== 'game_ttt') stopGameTimer();
         if (currentView !== 'game_c4') stopC4Timer();
+        if (currentView !== 'game_checkers') stopCheckersTimer();
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'mouse') showMouseDay();
@@ -152,11 +158,12 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'platform') showPlatform();
         else if (currentView === 'game_ttt') showTicTacToe();
         else if (currentView === 'game_c4') showConnectFour();
+        else if (currentView === 'game_checkers') showCheckers();
         else showMainMenu();
     }
 
     function showMainMenu() {
-        currentView = 'main'; stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer(); setBackBtnVisible(false);
+        currentView = 'main'; stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer(); stopCheckersTimer(); setBackBtnVisible(false);
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
@@ -164,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showPlatform() {
         currentView = 'platform';
         setBackBtnVisible(true);
-        stopGameTimer(); stopC4Timer();
+        stopGameTimer(); stopC4Timer(); stopCheckersTimer();
         if (currentPlatformTab === 'games') renderPlatformGames();
         else if (currentPlatformTab === 'leaderboard') renderPlatformLeaderboard();
         else if (currentPlatformTab === 'profile') renderPlatformProfile();
@@ -217,6 +224,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">МОРСКОЙ БОЙ</div>
                     <div class="game-card-stats">Классика</div>
                 </div>
+                <div class="game-card" data-game="checkers">
+                    <div class="game-card-icon">⚫</div>
+                    <div class="game-card-title">ШАШКИ</div>
+                    <div class="game-card-stats">Играй с другом</div>
+                </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
                     <div class="game-card-icon" style="opacity:0.4;">➕</div>
@@ -231,6 +243,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const game = this.getAttribute('data-game');
                 if (game === 'ttt') { currentView = 'game_ttt'; showTicTacToe(); }
                 else if (game === 'c4') { currentView = 'game_c4'; showConnectFour(); }
+                else if (game === 'checkers') { currentView = 'game_checkers'; showCheckers(); }
                 else if (game === 'battleship') openBattleship();
             });
         });
@@ -791,6 +804,262 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 3000);
     }
 
+    // ===== ШАШКИ =====
+    async function showCheckers() {
+        currentView = 'game_checkers';
+        setBackBtnVisible(true);
+        const user_id = getUserId();
+        try {
+            const r = await fetch(`${API_URL}/api/game/checkers/my_active?user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+            if (d.success && d.games && d.games.length > 0) {
+                await loadCheckersState(d.games[0].id);
+            } else {
+                renderCheckersLobby();
+            }
+        } catch (e) { renderCheckersLobby(); }
+    }
+
+    function renderCheckersLobby() {
+        render(`
+            <h2>⚫ Шашки</h2>
+            <p style="text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:20px;">
+                Русские шашки — собери соперника «в дамки» или забери все его фигуры
+            </p>
+            <button class="action-btn" id="createCheckersBtn">➕ Создать игру</button>
+        `);
+        document.getElementById('createCheckersBtn').addEventListener('click', createCheckersGame);
+    }
+
+    async function createCheckersGame() {
+        try {
+            const r = await fetch(`${API_URL}/api/game/checkers/create`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ user_id: getUserId() })
+            });
+            const d = await r.json();
+            if (d.success) await loadCheckersState(d.game_id);
+        } catch (e) { alert('Ошибка'); }
+    }
+
+    async function loadCheckersState(game_id) {
+        try {
+            const user_id = getUserId();
+            const r = await fetch(`${API_URL}/api/game/checkers/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+            if (!d.success) { renderCheckersLobby(); return; }
+            currentCheckersGame = d.game;
+            selectedCell = null;
+            renderCheckersBoard();
+            startCheckersAutoRefresh(game_id);
+        } catch (e) { renderCheckersLobby(); }
+    }
+
+    function renderCheckersBoard() {
+        const g = currentCheckersGame;
+
+        let statusText = '', statusColor = 'var(--text-dim)';
+        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = 'var(--accent-amber)'; }
+        else if (g.status === 'active') {
+            if (g.is_my_turn) { statusText = '🎯 Твой ход'; statusColor = 'var(--accent-green)'; }
+            else { statusText = '⏳ Ход соперника'; statusColor = 'var(--accent-amber)'; }
+        } else if (g.status === 'finished') {
+            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = 'var(--accent-green)'; }
+            else { statusText = '😔 Ты проиграл'; statusColor = 'var(--accent-pink)'; }
+        }
+
+        const pieces = parseCheckersFen(g.fen);
+
+        let boardHtml = '<div class="checkers-board-wrapper"><div class="checkers-board">';
+        for (let row = 0; row < 8; row++) {
+            for (let col = 0; col < 8; col++) {
+                const isDark = (row + col) % 2 === 1;
+                const cellClass = isDark ? 'checkers-cell dark' : 'checkers-cell light';
+
+                let cellNum = null;
+                if (isDark) {
+                    const squaresInRowBefore = row * 4;
+                    const offsetInRow = Math.floor(col / 2);
+                    cellNum = squaresInRowBefore + offsetInRow + 1;
+                }
+
+                const piece = cellNum ? pieces[cellNum] : null;
+
+                let cellExtra = '';
+                let pieceHtml = '';
+
+                if (piece) {
+                    let pieceClass = `checkers-piece ${piece.color}`;
+                    if (piece.isKing) pieceClass += ' king';
+                    pieceHtml = `<div class="${pieceClass}"></div>`;
+                }
+
+                if (cellNum && selectedCell === cellNum) {
+                    cellExtra += ' selected';
+                }
+
+                if (cellNum && selectedCell && isLegalTarget(selectedCell, cellNum)) {
+                    cellExtra += ' legal-target';
+                }
+
+                const canClick = g.status === 'active' && g.is_my_turn && cellNum;
+
+                boardHtml += `<div class="${cellClass}${cellExtra}${canClick ? ' playable' : ''}" data-cell="${cellNum || ''}">${pieceHtml}</div>`;
+            }
+        }
+        boardHtml += '</div></div>';
+
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:var(--text-dim); margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
+
+        let buttonsHtml = '';
+        if (g.status === 'waiting') {
+            buttonsHtml = `<button class="action-btn" id="inviteCheckersBtn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelCheckersBtn">❌ Отменить</button>`;
+        } else if (g.status === 'finished') {
+            buttonsHtml = `<button class="action-btn" id="newCheckersBtn">🔄 Новая игра</button><button class="action-btn secondary" id="backToPlatformCheckersBtn">🔙 К платформе</button>`;
+        } else {
+            buttonsHtml = `<button class="action-btn secondary" id="leaveCheckersBtn">🚪 Выйти</button>`;
+        }
+
+        render(`
+            <h2>⚫ Шашки #${g.id}</h2>
+            <p style="text-align:center; font-size:15px; font-weight:600; color:${statusColor}; margin-bottom:10px;">${statusText}</p>
+            ${boardHtml}
+            ${opponentInfo}
+            <div style="margin-top:16px;">${buttonsHtml}</div>
+        `);
+
+        document.querySelectorAll('.checkers-cell.playable').forEach(cell => {
+            cell.addEventListener('click', function() {
+                const cellNum = parseInt(this.getAttribute('data-cell'));
+                onCheckersCellClick(cellNum);
+            });
+        });
+
+        const inviteBtn = document.getElementById('inviteCheckersBtn');
+        if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id, 'checkers'));
+        const cancelBtn = document.getElementById('cancelCheckersBtn');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => { stopCheckersTimer(); currentCheckersGame = null; renderCheckersLobby(); });
+        const newBtn = document.getElementById('newCheckersBtn');
+        if (newBtn) newBtn.addEventListener('click', () => { stopCheckersTimer(); currentCheckersGame = null; renderCheckersLobby(); });
+        const backBtn = document.getElementById('backToPlatformCheckersBtn');
+        if (backBtn) backBtn.addEventListener('click', () => { stopCheckersTimer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
+        const leaveBtn = document.getElementById('leaveCheckersBtn');
+        if (leaveBtn) leaveBtn.addEventListener('click', () => { stopCheckersTimer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
+    }
+
+    function parseCheckersFen(fen) {
+        const pieces = {};
+        try {
+            let fenClean = fen;
+            const match = fen.match(/\[FEN "(.+?)"\]/);
+            if (match) fenClean = match[1];
+
+            const parts = fenClean.split(':');
+
+            for (let i = 1; i < parts.length; i++) {
+                let side = parts[i];
+                const color = side.startsWith('W') ? 'white' : 'black';
+                side = side.substring(1);
+
+                let isKing = false;
+                if (side.startsWith('K')) {
+                    isKing = true;
+                    side = side.substring(1);
+                }
+
+                if (!side) continue;
+
+                side.split(',').forEach(cellStr => {
+                    const cell = parseInt(cellStr);
+                    if (!isNaN(cell)) {
+                        pieces[cell] = { color, isKing };
+                    }
+                });
+            }
+        } catch (e) {
+            console.error('Ошибка parseCheckersFen:', e);
+        }
+        return pieces;
+    }
+
+    function onCheckersCellClick(cellNum) {
+        const g = currentCheckersGame;
+        if (!g || g.status !== 'active' || !g.is_my_turn) return;
+
+        const pieces = parseCheckersFen(g.fen);
+        const piece = pieces[cellNum];
+
+        if (selectedCell && isLegalTarget(selectedCell, cellNum)) {
+            const moveStr = `${selectedCell}-${cellNum}`;
+            makeCheckersMove(moveStr, selectedCell, cellNum);
+            return;
+        }
+
+        if (piece && piece.color === g.my_color) {
+            selectedCell = cellNum;
+            renderCheckersBoard();
+            return;
+        }
+
+        selectedCell = null;
+        renderCheckersBoard();
+    }
+
+    function isLegalTarget(from, to) {
+        const g = currentCheckersGame;
+        if (!g || !g.legal_moves) return false;
+
+        return g.legal_moves.some(moveStr => {
+            const parts = moveStr.split(/[-x]/);
+            return parts[0] === String(from) && parts[parts.length - 1] === String(to);
+        });
+    }
+
+    async function makeCheckersMove(moveStr, from, to) {
+        const g = currentCheckersGame;
+        if (!g) return;
+
+        let actualMove = moveStr;
+        if (g.legal_moves) {
+            const found = g.legal_moves.find(m => {
+                const parts = m.split(/[-x]/);
+                return parts[0] === String(from) && parts[parts.length - 1] === String(to);
+            });
+            if (found) actualMove = found;
+        }
+
+        try {
+            const r = await fetch(`${API_URL}/api/game/checkers/move`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ game_id: g.id, user_id: getUserId(), move: actualMove })
+            });
+            const d = await r.json();
+            if (d.success) {
+                selectedCell = null;
+                await loadCheckersState(g.id);
+            } else {
+                console.error('Ошибка хода:', d.error);
+                await loadCheckersState(g.id);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function startCheckersAutoRefresh(game_id) {
+        stopCheckersTimer();
+        checkersRefreshTimer = setInterval(async () => {
+            if (currentView !== 'game_checkers') { stopCheckersTimer(); return; }
+            try {
+                const user_id = getUserId();
+                const r = await fetch(`${API_URL}/api/game/checkers/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+                const d = await r.json();
+                if (d.success) {
+                    currentCheckersGame = d.game;
+                    renderCheckersBoard();
+                }
+            } catch (e) {}
+        }, 3000);
+    }
+
     // ===== СОБЫТИЯ =====
     function showEvents() {
         currentView = 'events'; setBackBtnVisible(true);
@@ -939,10 +1208,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) { if (!e.target.closest('.event-menu') && !e.target.closest('[data-role="toggle-menu"]')) document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none'); });
 
     document.getElementById('backBtn').addEventListener('click', function() {
-        stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer();
+        stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer(); stopCheckersTimer();
         if (currentView === 'edit') { currentView = 'events'; showEvents(); }
         else if (currentView === 'chart') { currentView = 'rates'; showRates(); }
-        else if (currentView === 'game_ttt' || currentView === 'game_c4') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
+        else if (currentView === 'game_ttt' || currentView === 'game_c4' || currentView === 'game_checkers') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
         else if (currentView === 'platform') { showMainMenu(); }
         else { showMainMenu(); }
     });
