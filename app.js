@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===== ИНИЦИАЛИЗАЦИЯ =====
+    // ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -56,7 +56,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function stopLottie() { if (lottieAnimation) { lottieAnimation.destroy(); lottieAnimation = null; } }
     function destroyChart() { if (currentChart) { currentChart.destroy(); currentChart = null; } }
 
-    // ===== ЗАГРУЗКА ФРАЗ =====
     async function loadPhrases() {
         try {
             const r = await fetch('phrases.json?v=' + Date.now());
@@ -120,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
-    // ===== КУРСЫ (С КЛИКОМ НА ГРАФИК) =====
+    // ===== КУРСЫ =====
     function showRates() {
         currentView = 'rates'; setBackBtnVisible(true); destroyChart();
         if (!rates) { render(`<h2>💵 Курсы валют</h2><p>Загрузка...</p>`); return; }
@@ -144,8 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.querySelectorAll('.rate-item').forEach(el => {
             el.addEventListener('click', () => {
-                const pair = el.getAttribute('data-pair');
-                currentRatePair = pair;
+                currentRatePair = el.getAttribute('data-pair');
                 currentView = 'chart';
                 showChartScreen();
             });
@@ -185,11 +183,21 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('chartInfo').textContent = 'Загрузка...';
 
         try {
-            const r = await fetch(`${API_URL}/api/rates/history?from=${fromCur}&to=${toCur}&days=${days}`, { headers: HEADERS });
+            let url;
+            // Если пара содержит RUB — ЦБ РФ
+            if (toCur === 'RUB' || fromCur === 'RUB') {
+                const base = fromCur === 'RUB' ? toCur : fromCur;
+                url = `${API_URL}/api/rates/history_cbr?from=${base}&days=${days}`;
+            } else {
+                // Иначе — Frankfurter
+                url = `${API_URL}/api/rates/history?from=${fromCur}&to=${toCur}&days=${days}`;
+            }
+
+            const r = await fetch(url, { headers: HEADERS });
             const d = await r.json();
 
             if (!d.success) {
-                document.getElementById('chartInfo').textContent = '❌ Не удалось загрузить график';
+                document.getElementById('chartInfo').textContent = '❌ ' + (d.error || 'Не удалось загрузить');
                 return;
             }
 
@@ -206,7 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return `${day}.${m}`;
                     }),
                     datasets: [{
-                        label: `${fromCur}/${toCur}`,
+                        label: `${d.from}/${d.to}`,
                         data: d.values,
                         borderColor: '#3390ec',
                         backgroundColor: gradient,
@@ -228,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             padding: 10,
                             cornerRadius: 10,
                             callbacks: {
-                                label: (ctx) => `${ctx.parsed.y.toFixed(2)} ${toCur}`
+                                label: (ctx) => `${ctx.parsed.y.toFixed(4)} ${d.to}`
                             }
                         }
                     },
