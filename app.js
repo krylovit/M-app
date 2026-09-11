@@ -158,13 +158,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
         render(`
             <h2>📈 ${pairLabel}</h2>
+            <div id="chartCurrentPrice" style="text-align:center; margin: 12px 0 4px 0;">
+                <span style="font-size: 28px; font-weight: 700;" id="currentPriceValue">—</span>
+                <span style="font-size: 14px; color: gray; margin-left: 4px;">${toCur}</span>
+            </div>
+            <div id="chartChange" style="text-align:center; font-size: 15px; font-weight: 600; margin-bottom: 16px;">—</div>
             <div class="period-buttons">
                 <button class="period-btn active" data-days="7">7 дней</button>
                 <button class="period-btn" data-days="30">30 дней</button>
                 <button class="period-btn" data-days="90">90 дней</button>
             </div>
             <div class="chart-container"><canvas id="rateChart"></canvas></div>
-            <p style="font-size:12px; color:gray; text-align:center;" id="chartInfo">Загрузка...</p>
+            <div id="chartMinMax" style="display:flex; justify-content:space-between; font-size:12px; color:gray; margin-top:8px; padding: 0 4px;">
+                <span>Мин: —</span>
+                <span>Макс: —</span>
+            </div>
+            <p style="font-size:11px; color:gray; text-align:center; margin-top:8px;" id="chartInfo">Загрузка...</p>
         `);
 
         document.querySelectorAll('.period-btn').forEach(btn => {
@@ -181,15 +190,16 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadChart(fromCur, toCur, days) {
         destroyChart();
         document.getElementById('chartInfo').textContent = 'Загрузка...';
+        document.getElementById('currentPriceValue').textContent = '—';
+        document.getElementById('chartChange').textContent = '—';
+        document.getElementById('chartMinMax').innerHTML = '<span>Мин: —</span><span>Макс: —</span>';
 
         try {
             let url;
-            // Если пара содержит RUB — ЦБ РФ
             if (toCur === 'RUB' || fromCur === 'RUB') {
                 const base = fromCur === 'RUB' ? toCur : fromCur;
                 url = `${API_URL}/api/rates/history_cbr?from=${base}&days=${days}`;
             } else {
-                // Иначе — Frankfurter
                 url = `${API_URL}/api/rates/history?from=${fromCur}&to=${toCur}&days=${days}`;
             }
 
@@ -201,10 +211,38 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            const values = d.values;
+            const firstValue = values[0];
+            const lastValue = values[values.length - 1];
+            const minValue = Math.min(...values);
+            const maxValue = Math.max(...values);
+            const diff = lastValue - firstValue;
+            const diffPercent = (diff / firstValue) * 100;
+
+            const decimals = lastValue < 1 ? 4 : 2;
+
+            document.getElementById('currentPriceValue').textContent = lastValue.toFixed(decimals);
+
+            const changeEl = document.getElementById('chartChange');
+            if (diff >= 0) {
+                changeEl.style.color = '#27ae60';
+                changeEl.textContent = `▲ +${diff.toFixed(decimals)} (${diffPercent >= 0 ? '+' : ''}${diffPercent.toFixed(2)}%)`;
+            } else {
+                changeEl.style.color = '#e74c3c';
+                changeEl.textContent = `▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
+            }
+
+            document.getElementById('chartMinMax').innerHTML =
+                `<span>Мин: ${minValue.toFixed(decimals)}</span><span>Макс: ${maxValue.toFixed(decimals)}</span>`;
+
+            const lineColor = diff >= 0 ? '#27ae60' : '#e74c3c';
+            const gradientColorTop = diff >= 0 ? 'rgba(39, 174, 96, 0.3)' : 'rgba(231, 76, 60, 0.3)';
+            const gradientColorBottom = diff >= 0 ? 'rgba(39, 174, 96, 0.02)' : 'rgba(231, 76, 60, 0.02)';
+
             const ctx = document.getElementById('rateChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 220);
-            gradient.addColorStop(0, 'rgba(51, 144, 236, 0.3)');
-            gradient.addColorStop(1, 'rgba(51, 144, 236, 0.02)');
+            gradient.addColorStop(0, gradientColorTop);
+            gradient.addColorStop(1, gradientColorBottom);
 
             currentChart = new Chart(ctx, {
                 type: 'line',
@@ -215,15 +253,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }),
                     datasets: [{
                         label: `${d.from}/${d.to}`,
-                        data: d.values,
-                        borderColor: '#3390ec',
+                        data: values,
+                        borderColor: lineColor,
                         backgroundColor: gradient,
                         borderWidth: 2,
                         fill: true,
                         tension: 0.4,
                         pointRadius: 0,
                         pointHoverRadius: 5,
-                        pointHoverBackgroundColor: '#3390ec'
+                        pointHoverBackgroundColor: lineColor
                     }]
                 },
                 options: {
@@ -236,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             padding: 10,
                             cornerRadius: 10,
                             callbacks: {
-                                label: (ctx) => `${ctx.parsed.y.toFixed(4)} ${d.to}`
+                                label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}`
                             }
                         }
                     },
