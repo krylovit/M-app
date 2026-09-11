@@ -960,7 +960,13 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (a === 'weather') btn.addEventListener('click', showWeather);
             else if (a === 'mouse') btn.addEventListener('click', showMouseDay);
             else if (a === 'events') btn.addEventListener('click', showEvents);
-            else if (a === 'games') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
+            else if (a === 'games') {
+                btn.addEventListener('click', () => {
+                    currentView = 'platform';
+                    currentPlatformTab = 'games';
+                    showPlatform();
+                });
+            }
         });
     }
 
