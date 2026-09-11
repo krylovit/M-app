@@ -4,10 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мой помощник</title>
+
+    <!-- Шрифт Orbitron для заголовков -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="styles.css">
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Tabler Icons (web font) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 </head>
 <body>
     <div id="app">
@@ -20,7 +30,7 @@
             <button data-action="weather">🌤️ Погода</button>
             <button data-action="mouse">🐭 День мыши</button>
             <button data-action="events">📅 События</button>
-            <button data-action="games">🎮 Игры</button>
+            <button data-action="games" class="nav-games">🎮 Игровая платформа</button>
         </nav>
 
         <main id="content">
@@ -30,11 +40,10 @@
         <button id="backBtn" style="display:none;">🔙 Назад</button>
     </div>
 
-    <!-- Контейнер для Морского боя -->
-    <div id="battleship-container" style="display:none; position:fixed; inset:0; background:#fff; z-index:999;">
-        <div style="padding: 8px; background: #1F4E79; display: flex; align-items: center; justify-content: space-between;">
-            <span style="color: white; font-weight: 600; font-size: 15px;">⚓ Морской бой</span>
-            <button id="closeBattleshipBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">✖ Закрыть</button>
+    <div id="battleship-container" style="display:none; position:fixed; inset:0; background:#0a0e27; z-index:999;">
+        <div style="padding: 8px; background: #0f1b3d; display: flex; align-items: center; justify-content: space-between;">
+            <span style="color: #00d4ff; font-weight: 600; font-size: 15px; text-shadow: 0 0 10px rgba(0,212,255,0.5);">⚓ Морской бой</span>
+            <button id="closeBattleshipBtn" style="background: rgba(0,212,255,0.2); border: 1px solid rgba(0,212,255,0.4); color: #00d4ff; padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">✖ Закрыть</button>
         </div>
         <iframe id="battleship-frame" src="" style="width: 100%; height: calc(100vh - 48px); border: none; display: block;"></iframe>
     </div>

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tg.ready();
         tg.expand();
     } else {
-        tg = { ready: function() {}, expand: function() {} };
+        tg = { ready: function() {}, expand: function() {}, initDataUnsafe: { user: { id: 488036257, username: 'Krylovit', photo_url: '' } } };
     }
 
     const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let lottieAnimation = null;
     let currentChart = null;
     let currentRatePair = null;
+    let currentPlatformTab = 'games';
     const imageCache = {};
 
     let currentGame = null;
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let c4RefreshTimer = null;
     let lastC4Board = '';
 
+    let playerStats = { wins: 0, losses: 0, draws: 0, rating: 0 };
+
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.id;
         return 0;
@@ -54,6 +57,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function getUsername() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.username || '';
         return '';
+    }
+    function getPhotoUrl() {
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.photo_url || '';
+        return '';
+    }
+    function getFirstName() {
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.first_name || 'Игрок';
+        return 'Игрок';
     }
     function escapeHtml(s) {
         if (!s) return '';
@@ -90,8 +101,17 @@ document.addEventListener('DOMContentLoaded', function() {
             rates = d.rates; weather = d.weather; events = d.events;
             publicEvents = d.public_events || []; mouseDay = d.mouseDay;
             await preloadAllImages();
+            await fetchPlayerStats();
             renderCurrentView();
         } catch (e) { console.error('Ошибка API:', e); }
+    }
+
+    async function fetchPlayerStats() {
+        try {
+            const r = await fetch(`${API_URL}/api/game/my_stats?user_id=${getUserId()}`, { headers: HEADERS });
+            const d = await r.json();
+            if (d.success) playerStats = d.stats;
+        } catch (e) {}
     }
 
     async function getImageUrl(filename) {
@@ -129,10 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'public_events') showPublicEvents();
         else if (currentView === 'edit') showEditScreen();
         else if (currentView === 'chart') showChartScreen();
-        else if (currentView === 'games') showGamesMenu();
+        else if (currentView === 'platform') showPlatform();
         else if (currentView === 'game_ttt') showTicTacToe();
         else if (currentView === 'game_c4') showConnectFour();
-        else if (currentView === 'game_leaderboard') showLeaderboard();
         else showMainMenu();
     }
 
@@ -141,6 +160,163 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
+    // ===== ИГРОВАЯ ПЛАТФОРМА =====
+    function showPlatform() {
+        currentView = 'platform';
+        setBackBtnVisible(true);
+        stopGameTimer(); stopC4Timer();
+        if (currentPlatformTab === 'games') renderPlatformGames();
+        else if (currentPlatformTab === 'leaderboard') renderPlatformLeaderboard();
+        else if (currentPlatformTab === 'profile') renderPlatformProfile();
+    }
+
+    function platformTabsHtml() {
+        return `
+            <div class="platform-tabs">
+                <button class="platform-tab ${currentPlatformTab === 'games' ? 'active' : ''}" data-tab="games">
+                    <i class="ti ti-device-gamepad-2"></i>
+                    <span>Игры</span>
+                </button>
+                <button class="platform-tab ${currentPlatformTab === 'leaderboard' ? 'active' : ''}" data-tab="leaderboard">
+                    <i class="ti ti-trophy"></i>
+                    <span>Рейтинг</span>
+                </button>
+                <button class="platform-tab ${currentPlatformTab === 'profile' ? 'active' : ''}" data-tab="profile">
+                    <i class="ti ti-user"></i>
+                    <span>Профиль</span>
+                </button>
+            </div>
+        `;
+    }
+
+    function setupPlatformTabs() {
+        document.querySelectorAll('.platform-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                currentPlatformTab = this.getAttribute('data-tab');
+                showPlatform();
+            });
+        });
+    }
+
+    function renderPlatformGames() {
+        render(`
+            <h2>🎮 Игровая платформа</h2>
+            <div class="games-grid">
+                <div class="game-card" data-game="ttt">
+                    <div class="game-card-icon">❌⭕</div>
+                    <div class="game-card-title">КРЕСТИКИ</div>
+                    <div class="game-card-stats">${playerStats.wins}П / ${playerStats.losses}П</div>
+                </div>
+                <div class="game-card" data-game="c4">
+                    <div class="game-card-icon amber">🔴</div>
+                    <div class="game-card-title">4 В РЯД</div>
+                    <div class="game-card-stats">Играй с другом</div>
+                </div>
+                <div class="game-card" data-game="battleship">
+                    <div class="game-card-icon">⚓</div>
+                    <div class="game-card-title">МОРСКОЙ БОЙ</div>
+                    <div class="game-card-stats">Классика</div>
+                </div>
+                <div class="game-card disabled">
+                    <div class="game-card-badge">Скоро</div>
+                    <div class="game-card-icon" style="opacity:0.4;">➕</div>
+                    <div class="game-card-title">НОВАЯ ИГРА</div>
+                    <div class="game-card-stats">В разработке</div>
+                </div>
+            </div>
+            ${platformTabsHtml()}
+        `);
+        document.querySelectorAll('.game-card[data-game]').forEach(card => {
+            card.addEventListener('click', function() {
+                const game = this.getAttribute('data-game');
+                if (game === 'ttt') { currentView = 'game_ttt'; showTicTacToe(); }
+                else if (game === 'c4') { currentView = 'game_c4'; showConnectFour(); }
+                else if (game === 'battleship') openBattleship();
+            });
+        });
+        setupPlatformTabs();
+    }
+
+    async function renderPlatformLeaderboard() {
+        render(`
+            <h2>🏆 Рейтинг</h2>
+            <p style="text-align:center; color:var(--text-dim);">Загрузка...</p>
+            ${platformTabsHtml()}
+        `);
+        setupPlatformTabs();
+
+        try {
+            const r = await fetch(`${API_URL}/api/game/leaderboard`, { headers: HEADERS });
+            const d = await r.json();
+            let html = `<h2>🏆 Рейтинг</h2>`;
+
+            if (!d.success || !d.leaderboard.length) {
+                html += `<p style="text-align:center; color:var(--text-dim); margin-top:20px;">Пока никого нет. Сыграй первым!</p>`;
+            } else {
+                d.leaderboard.forEach((p, i) => {
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                    const isMe = p.user_id === getUserId();
+                    html += `
+                        <div class="leaderboard-row ${isMe ? 'me' : ''}">
+                            <div class="leaderboard-medal">${medal}</div>
+                            <div class="leaderboard-info">
+                                <div class="leaderboard-name">@${escapeHtml(p.username || 'игрок')}</div>
+                                <div class="leaderboard-detail">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div>
+                            </div>
+                            <div class="leaderboard-rating">${p.rating}</div>
+                        </div>
+                    `;
+                });
+            }
+
+            html += platformTabsHtml();
+            render(html);
+            setupPlatformTabs();
+        } catch (e) {
+            render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:var(--accent-pink);">Ошибка загрузки</p>${platformTabsHtml()}`);
+            setupPlatformTabs();
+        }
+    }
+
+    function renderPlatformProfile() {
+        const photoUrl = getPhotoUrl();
+        const avatar = photoUrl
+            ? `<img src="${photoUrl}" class="profile-avatar" alt="">`
+            : `<div class="profile-avatar" style="display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg-panel);">👤</div>`;
+
+        render(`
+            <h2>👤 Профиль</h2>
+            <div class="profile-header">
+                ${avatar}
+                <div class="profile-info">
+                    <h3>${escapeHtml(getFirstName())}</h3>
+                    <p>@${escapeHtml(getUsername() || 'игрок')}</p>
+                </div>
+            </div>
+            <div class="profile-stats">
+                <div class="stat-box">
+                    <span class="stat-value amber">${playerStats.wins || 0}</span>
+                    <span class="stat-label">Побед</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value">${playerStats.rating || 0}</span>
+                    <span class="stat-label">Рейтинг</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value">${playerStats.losses || 0}</span>
+                    <span class="stat-label">Поражений</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-value">${playerStats.draws || 0}</span>
+                    <span class="stat-label">Ничьих</span>
+                </div>
+            </div>
+            ${platformTabsHtml()}
+        `);
+        setupPlatformTabs();
+    }
+
+    // ===== ОСТАЛЬНЫЕ ВИДЫ =====
     function showRates() {
         currentView = 'rates'; setBackBtnVisible(true); destroyChart();
         if (!rates) { render(`<h2>💵 Курсы валют</h2><p>Загрузка...</p>`); return; }
@@ -149,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="rate-item" data-pair="USD-RUB"><span class="rate-label">🇺🇸 1 USD</span><span class="rate-value">${rates.usd_rub} RUB</span></div>
             <div class="rate-item" data-pair="USD-THB"><span class="rate-label">🇺🇸 1 USD</span><span class="rate-value">${rates.usd_thb} THB</span></div>
             <div class="rate-item" data-pair="THB-RUB"><span class="rate-label">🇹🇭 1 THB</span><span class="rate-value">${rates.thb_rub} RUB</span></div>
-            <p style="font-size:12px; color:gray; margin-top:12px; text-align:center;">Нажми на курс, чтобы увидеть график</p>
+            <p style="font-size:12px; color:var(--text-dim); margin-top:12px; text-align:center;">Нажми на курс, чтобы увидеть график</p>
         `);
         document.querySelectorAll('.rate-item').forEach(el => {
             el.addEventListener('click', () => {
@@ -169,10 +345,10 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`
             <h2>📈 ${pairLabel}</h2>
             <div style="text-align:center; margin: 12px 0 4px 0;">
-                <span style="font-size: 28px; font-weight: 700;">${currentPriceText}</span>
-                <span style="font-size: 14px; color: gray; margin-left: 4px;">${toCur}</span>
+                <span style="font-family:'Orbitron',sans-serif; font-size: 28px; font-weight: 700; color:var(--accent-amber); text-shadow: 0 0 15px rgba(255,170,0,0.5);">${currentPriceText}</span>
+                <span style="font-size: 14px; color: var(--text-dim); margin-left: 4px;">${toCur}</span>
             </div>
-            <div style="text-align:center; font-size: 12px; color: gray; margin-bottom: 16px;">Текущий курс</div>
+            <div style="text-align:center; font-size: 12px; color: var(--text-dim); margin-bottom: 16px;">Текущий курс</div>
             <div id="chartChange" style="text-align:center; font-size: 15px; font-weight: 600; margin-bottom: 16px;">—</div>
             <div class="period-buttons">
                 <button class="period-btn active" data-days="7">7 дней</button>
@@ -180,10 +356,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button class="period-btn" data-days="90">90 дней</button>
             </div>
             <div class="chart-container"><canvas id="rateChart"></canvas></div>
-            <div id="chartMinMax" style="display:flex; justify-content:space-between; font-size:12px; color:gray; margin-top:8px; padding: 0 4px;">
+            <div id="chartMinMax" style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-top:8px; padding: 0 4px;">
                 <span>Мин: —</span><span>Макс: —</span>
             </div>
-            <p style="font-size:11px; color:gray; text-align:center; margin-top:8px;" id="chartInfo">Загрузка...</p>
+            <p style="font-size:11px; color:var(--text-dim); text-align:center; margin-top:8px;" id="chartInfo">Загрузка...</p>
         `);
         document.querySelectorAll('.period-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -221,16 +397,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const decimals = currentPrice < 1 ? 4 : 2;
             const changeEl = document.getElementById('chartChange');
             if (diff >= 0) {
-                changeEl.style.color = '#27ae60';
+                changeEl.style.color = '#00ff9d';
                 changeEl.textContent = `за ${days} дн.: ▲ +${diff.toFixed(decimals)} (${diffPercent >= 0 ? '+' : ''}${diffPercent.toFixed(2)}%)`;
             } else {
-                changeEl.style.color = '#e74c3c';
+                changeEl.style.color = '#ff2e63';
                 changeEl.textContent = `за ${days} дн.: ▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
             }
             document.getElementById('chartMinMax').innerHTML = `<span>Мин: ${minValue.toFixed(decimals)}</span><span>Макс: ${maxValue.toFixed(decimals)}</span>`;
-            const lineColor = diff >= 0 ? '#27ae60' : '#e74c3c';
-            const gradientColorTop = diff >= 0 ? 'rgba(39, 174, 96, 0.3)' : 'rgba(231, 76, 60, 0.3)';
-            const gradientColorBottom = diff >= 0 ? 'rgba(39, 174, 96, 0.02)' : 'rgba(231, 76, 60, 0.02)';
+            const lineColor = diff >= 0 ? '#00ff9d' : '#ff2e63';
+            const gradientColorTop = diff >= 0 ? 'rgba(0, 255, 157, 0.3)' : 'rgba(255, 46, 99, 0.3)';
+            const gradientColorBottom = diff >= 0 ? 'rgba(0, 255, 157, 0.02)' : 'rgba(255, 46, 99, 0.02)';
             const ctx = document.getElementById('rateChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 220);
             gradient.addColorStop(0, gradientColorTop);
@@ -243,8 +419,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 10, callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}` } } },
-                    scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } },
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15, 27, 61, 0.95)', borderColor: '#00d4ff', borderWidth: 1, padding: 10, cornerRadius: 10, titleColor: '#00d4ff', bodyColor: '#e0e6f0', callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}` } } },
+                    scales: { x: { grid: { color: 'rgba(0, 212, 255, 0.05)' }, ticks: { color: '#8892b0', maxTicksLimit: 6 } }, y: { grid: { color: 'rgba(0, 212, 255, 0.05)' }, ticks: { color: '#8892b0' } } },
                     interaction: { intersect: false, mode: 'index' }
                 }
             });
@@ -259,8 +435,8 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`
             <h2>🌴 Погода на Кочанге</h2>
             <div id="weather-animation-container" style="width:100%;max-width:320px;height:220px;margin:10px auto;"></div>
-            <p style="text-align:center;font-size:17px;">🌡️ <b>${weather.temp}</b></p>
-            <p style="text-align:center;font-size:17px;">💨 <b>${weather.wind}</b></p>
+            <p style="text-align:center;font-size:17px;">🌡️ <b style="color:var(--accent-amber);">${weather.temp}</b></p>
+            <p style="text-align:center;font-size:17px;">💨 <b style="color:var(--accent-blue);">${weather.wind}</b></p>
         `);
         const c = document.getElementById('weather-animation-container');
         if (c && window.lottie) { stopLottie(); lottieAnimation = lottie.loadAnimation({ container: c, renderer: 'svg', loop: true, autoplay: true, path: anim }); }
@@ -284,26 +460,11 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`
             <h2>🐭 День мыши</h2>
             <div id="mouse-animation-container" style="width:100%;max-width:320px;height:220px;margin:10px auto;"></div>
-            <p style="text-align:center;font-size:18px;margin-top:16px;">До 13 февраля осталось <b>${days}</b> дней</p>
-            <p style="text-align:center;font-style:italic;color:var(--tg-theme-hint-color,#666);margin-top:10px;">${phrase}</p>
+            <p style="text-align:center;font-size:18px;margin-top:16px;">До 13 февраля осталось <b style="color:var(--accent-blue);">${days}</b> дней</p>
+            <p style="text-align:center;font-style:italic;color:var(--text-dim);margin-top:10px;">${phrase}</p>
         `);
         const c = document.getElementById('mouse-animation-container');
         if (c && window.lottie) { stopLottie(); lottieAnimation = lottie.loadAnimation({ container: c, renderer: 'svg', loop: true, autoplay: true, path: anim }); }
-    }
-
-    function showGamesMenu() {
-        currentView = 'games'; setBackBtnVisible(true); stopGameTimer(); stopC4Timer();
-        render(`
-            <h2>🎮 Игры</h2>
-            <button class="action-btn" id="tttBtn">❌⭕ Крестики-нолики</button>
-            <button class="action-btn" id="c4Btn">🔴 4 в ряд</button>
-            <button class="action-btn" id="battleshipBtn">⚓ Морской бой</button>
-            <button class="action-btn secondary" id="leaderboardBtn">🏆 Рейтинг</button>
-        `);
-        document.getElementById('tttBtn').addEventListener('click', () => { currentView = 'game_ttt'; showTicTacToe(); });
-        document.getElementById('c4Btn').addEventListener('click', () => { currentView = 'game_c4'; showConnectFour(); });
-        document.getElementById('battleshipBtn').addEventListener('click', openBattleship);
-        document.getElementById('leaderboardBtn').addEventListener('click', () => { currentView = 'game_leaderboard'; showLeaderboard(); });
     }
 
     function openBattleship() {
@@ -334,10 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTttLobby() {
         render(`
             <h2>❌⭕ Крестики-нолики</h2>
-            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга, или сыграй с ботом</p>
+            <p style="text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга, или сыграй с ботом</p>
             <button class="action-btn" id="createGameBtn">➕ Создать игру</button>
             <button class="action-btn secondary" id="botGameBtn">🤖 Играть с ботом</button>
-            <p style="font-size:12px; color:gray; margin-top:20px; text-align:center;">Ты будешь играть за ❌</p>
         `);
         document.getElementById('createGameBtn').addEventListener('click', createGame);
         document.getElementById('botGameBtn').addEventListener('click', startBotGame);
@@ -345,10 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function createGame() {
         try {
-            const r = await fetch(`${API_URL}/api/game/create`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ user_id: getUserId() })
-            });
+            const r = await fetch(`${API_URL}/api/game/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ user_id: getUserId() }) });
             const d = await r.json();
             if (d.success) await loadGameState(d.game_id);
         } catch (e) { alert('Ошибка'); }
@@ -356,10 +513,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function startBotGame() {
         try {
-            const r = await fetch(`${API_URL}/api/game/start_bot`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ user_id: getUserId() })
-            });
+            const r = await fetch(`${API_URL}/api/game/start_bot`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ user_id: getUserId() }) });
             const d = await r.json();
             if (d.success) await loadGameState(d.game_id);
         } catch (e) { alert('Ошибка'); }
@@ -381,25 +535,22 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGameBoard() {
         const g = currentGame;
         const board = g.board.split('');
-
-        let statusText = '', statusColor = 'gray';
-        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
+        let statusText = '', statusColor = 'var(--text-dim)';
+        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = 'var(--accent-amber)'; }
         else if (g.status === 'active') {
-            if (g.is_my_turn) { statusText = '🎯 Твой ход'; statusColor = '#27ae60'; }
-            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = '#e67e22'; }
+            if (g.is_my_turn) { statusText = '🎯 Твой ход'; statusColor = 'var(--accent-green)'; }
+            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = 'var(--accent-amber)'; }
         } else if (g.status === 'finished') {
-            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = '#27ae60'; }
-            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = '#3498db'; }
-            else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
+            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = 'var(--accent-green)'; }
+            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = 'var(--accent-blue)'; }
+            else { statusText = '😔 Ты проиграл'; statusColor = 'var(--accent-pink)'; }
         }
-
         let winningLine = null;
         const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         for (const line of WIN_LINES) {
             const [a, b, c] = line;
             if (board[a] !== '-' && board[a] === board[b] && board[b] === board[c]) { winningLine = line; break; }
         }
-
         let boardHtml = '<div class="ttt-board">';
         for (let i = 0; i < 9; i++) {
             const cell = board[i];
@@ -411,18 +562,11 @@ document.addEventListener('DOMContentLoaded', function() {
             boardHtml += `<div class="${cellClass}" data-pos="${i}" ${canClick ? 'data-clickable="1"' : ''}>${cell === '-' ? '' : cell}</div>`;
         }
         boardHtml += '</div>';
-
-        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
-
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:var(--text-dim); margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
         let buttonsHtml = '';
-        if (g.status === 'waiting') {
-            buttonsHtml = `<button class="action-btn" id="inviteBtn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelGameBtn">❌ Отменить</button>`;
-        } else if (g.status === 'finished') {
-            buttonsHtml = `<button class="action-btn" id="newGameBtn">🔄 Новая игра</button><button class="action-btn secondary" id="backToGamesBtn">🔙 К играм</button>`;
-        } else {
-            buttonsHtml = `<button class="action-btn secondary" id="leaveGameBtn">🚪 Выйти</button>`;
-        }
-
+        if (g.status === 'waiting') buttonsHtml = `<button class="action-btn" id="inviteBtn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelGameBtn">❌ Отменить</button>`;
+        else if (g.status === 'finished') buttonsHtml = `<button class="action-btn" id="newGameBtn">🔄 Новая игра</button><button class="action-btn secondary" id="backToPlatformBtn">🔙 К платформе</button>`;
+        else buttonsHtml = `<button class="action-btn secondary" id="leaveGameBtn">🚪 Выйти</button>`;
         render(`
             <h2>❌⭕ Игра #${g.id}</h2>
             <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:16px;">${statusText}</p>
@@ -430,39 +574,27 @@ document.addEventListener('DOMContentLoaded', function() {
             ${opponentInfo}
             <div style="margin-top:20px;">${buttonsHtml}</div>
         `);
-
-        if (g.board !== lastBoard) {
-            document.querySelectorAll('.ttt-cell.x, .ttt-cell.o').forEach(cell => {
-                cell.style.animation = 'none';
-                setTimeout(() => { cell.style.animation = ''; }, 10);
-            });
-        }
         lastBoard = g.board;
-
         document.querySelectorAll('.ttt-cell[data-clickable="1"]').forEach(cell => {
             cell.addEventListener('click', function() { makeMove(parseInt(this.getAttribute('data-pos'))); });
         });
-
         const inviteBtn = document.getElementById('inviteBtn');
         if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id, 'ttt'));
         const cancelBtn = document.getElementById('cancelGameBtn');
         if (cancelBtn) cancelBtn.addEventListener('click', cancelCurrentGame);
         const newGameBtn = document.getElementById('newGameBtn');
         if (newGameBtn) newGameBtn.addEventListener('click', () => { stopGameTimer(); currentGame = null; renderTttLobby(); });
-        const backBtn = document.getElementById('backToGamesBtn');
-        if (backBtn) backBtn.addEventListener('click', () => { stopGameTimer(); showGamesMenu(); });
+        const backBtn = document.getElementById('backToPlatformBtn');
+        if (backBtn) backBtn.addEventListener('click', () => { stopGameTimer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
         const leaveBtn = document.getElementById('leaveGameBtn');
-        if (leaveBtn) leaveBtn.addEventListener('click', () => { stopGameTimer(); showGamesMenu(); });
+        if (leaveBtn) leaveBtn.addEventListener('click', () => { stopGameTimer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
     }
 
     async function makeMove(position) {
         const g = currentGame;
         if (!g || g.status !== 'active' || !g.is_my_turn) return;
         try {
-            const r = await fetch(`${API_URL}/api/game/move`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ game_id: g.id, user_id: getUserId(), position: position })
-            });
+            const r = await fetch(`${API_URL}/api/game/move`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ game_id: g.id, user_id: getUserId(), position: position }) });
             const d = await r.json();
             if (d.success) await loadGameState(g.id);
         } catch (e) {}
@@ -489,10 +621,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function sendInvite(game_id, username, game_type) {
         try {
-            const r = await fetch(`${API_URL}/api/game/invite`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ game_id: game_id, username: username, from_username: getUsername(), game_type: game_type || 'ttt' })
-            });
+            const r = await fetch(`${API_URL}/api/game/invite`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ game_id: game_id, username: username, from_username: getUsername(), game_type: game_type || 'ttt' }) });
             const d = await r.json();
             if (!d.success) { alert('❌ Не удалось найти игрока: ' + (d.error || 'unknown')); return; }
             alert(`✅ Приглашение отправлено @${d.invited_username}!`);
@@ -525,9 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderC4Lobby() {
         render(`
             <h2>🔴 4 в ряд</h2>
-            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">
-                Бросай фишки и собери 4 в ряд — по горизонтали, вертикали или диагонали
-            </p>
+            <p style="text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:20px;">Бросай фишки и собери 4 в ряд</p>
             <button class="action-btn" id="createC4Btn">➕ Создать игру</button>
             <button class="action-btn secondary" id="botC4Btn">🤖 Играть с ботом</button>
         `);
@@ -537,10 +664,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function createC4Game() {
         try {
-            const r = await fetch(`${API_URL}/api/game/c4/create`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ user_id: getUserId() })
-            });
+            const r = await fetch(`${API_URL}/api/game/c4/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ user_id: getUserId() }) });
             const d = await r.json();
             if (d.success) await loadC4State(d.game_id);
         } catch (e) { alert('Ошибка'); }
@@ -548,10 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function startC4BotGame() {
         try {
-            const r = await fetch(`${API_URL}/api/game/c4/start_bot`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ user_id: getUserId() })
-            });
+            const r = await fetch(`${API_URL}/api/game/c4/start_bot`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ user_id: getUserId() }) });
             const d = await r.json();
             if (d.success) await loadC4State(d.game_id);
         } catch (e) { alert('Ошибка'); }
@@ -573,18 +694,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const g = currentC4Game;
         const board = g.board.split('');
         const winningCells = g.winning_cells || [];
-
-        let statusText = '', statusColor = 'gray';
-        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
+        let statusText = '', statusColor = 'var(--text-dim)';
+        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = 'var(--accent-amber)'; }
         else if (g.status === 'active') {
-            if (g.is_my_turn) { statusText = '🎯 Твой ход — выбери столбец'; statusColor = '#27ae60'; }
-            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = '#e67e22'; }
+            if (g.is_my_turn) { statusText = '🎯 Твой ход — выбери столбец'; statusColor = 'var(--accent-green)'; }
+            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = 'var(--accent-amber)'; }
         } else if (g.status === 'finished') {
-            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = '#27ae60'; }
-            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = '#3498db'; }
-            else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
+            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = 'var(--accent-green)'; }
+            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = 'var(--accent-blue)'; }
+            else { statusText = '😔 Ты проиграл'; statusColor = 'var(--accent-pink)'; }
         }
-
         let controlsHtml = '<div class="c4-controls">';
         for (let col = 0; col < 7; col++) {
             let canDrop = false;
@@ -596,17 +715,13 @@ document.addEventListener('DOMContentLoaded', function() {
             controlsHtml += `<button class="c4-column-btn" data-col="${col}" ${canClick ? '' : 'disabled'}>${arrow}</button>`;
         }
         controlsHtml += '</div>';
-
         const oldBoard = lastC4Board || '';
         const droppingCells = [];
         if (oldBoard.length === board.length) {
             for (let i = 0; i < board.length; i++) {
-                if (oldBoard[i] !== board[i] && board[i] !== '-') {
-                    droppingCells.push(i);
-                }
+                if (oldBoard[i] !== board[i] && board[i] !== '-') droppingCells.push(i);
             }
         }
-
         let boardHtml = '<div class="c4-board">';
         for (let i = 0; i < 42; i++) {
             const cell = board[i];
@@ -618,18 +733,11 @@ document.addEventListener('DOMContentLoaded', function() {
             boardHtml += `<div class="${cellClass}"></div>`;
         }
         boardHtml += '</div>';
-
-        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:8px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
-
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:var(--text-dim); margin-top:8px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
         let buttonsHtml = '';
-        if (g.status === 'waiting') {
-            buttonsHtml = `<button class="action-btn" id="inviteC4Btn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelC4Btn">❌ Отменить</button>`;
-        } else if (g.status === 'finished') {
-            buttonsHtml = `<button class="action-btn" id="newC4Btn">🔄 Новая игра</button><button class="action-btn secondary" id="backToGamesC4Btn">🔙 К играм</button>`;
-        } else {
-            buttonsHtml = `<button class="action-btn secondary" id="leaveC4Btn">🚪 Выйти</button>`;
-        }
-
+        if (g.status === 'waiting') buttonsHtml = `<button class="action-btn" id="inviteC4Btn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelC4Btn">❌ Отменить</button>`;
+        else if (g.status === 'finished') buttonsHtml = `<button class="action-btn" id="newC4Btn">🔄 Новая игра</button><button class="action-btn secondary" id="backToPlatformC4Btn">🔙 К платформе</button>`;
+        else buttonsHtml = `<button class="action-btn secondary" id="leaveC4Btn">🚪 Выйти</button>`;
         render(`
             <h2>🔴 4 в ряд #${g.id}</h2>
             <p style="text-align:center; font-size:15px; font-weight:600; color:${statusColor}; margin-bottom:10px;">${statusText}</p>
@@ -638,49 +746,34 @@ document.addEventListener('DOMContentLoaded', function() {
             ${opponentInfo}
             <div style="margin-top:16px;">${buttonsHtml}</div>
         `);
-
         lastC4Board = g.board;
-
         document.querySelectorAll('.c4-column-btn').forEach(btn => {
             if (btn.disabled) return;
-            btn.addEventListener('click', function() {
-                const col = parseInt(this.getAttribute('data-col'));
-                makeC4Move(col);
-            });
+            btn.addEventListener('click', function() { makeC4Move(parseInt(this.getAttribute('data-col'))); });
         });
-
         const inviteC4Btn = document.getElementById('inviteC4Btn');
         if (inviteC4Btn) inviteC4Btn.addEventListener('click', () => openInviteDialog(g.id, 'c4'));
         const cancelC4Btn = document.getElementById('cancelC4Btn');
         if (cancelC4Btn) cancelC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
         const newC4Btn = document.getElementById('newC4Btn');
         if (newC4Btn) newC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
-        const backToGamesC4Btn = document.getElementById('backToGamesC4Btn');
-        if (backToGamesC4Btn) backToGamesC4Btn.addEventListener('click', () => { stopC4Timer(); showGamesMenu(); });
+        const backBtn = document.getElementById('backToPlatformC4Btn');
+        if (backBtn) backBtn.addEventListener('click', () => { stopC4Timer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
         const leaveC4Btn = document.getElementById('leaveC4Btn');
-        if (leaveC4Btn) leaveC4Btn.addEventListener('click', () => { stopC4Timer(); showGamesMenu(); });
+        if (leaveC4Btn) leaveC4Btn.addEventListener('click', () => { stopC4Timer(); currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); });
     }
 
     async function makeC4Move(col) {
         const g = currentC4Game;
         if (!g || g.status !== 'active' || !g.is_my_turn) return;
         try {
-            const r = await fetch(`${API_URL}/api/game/c4/move`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ game_id: g.id, user_id: getUserId(), col: col })
-            });
+            const r = await fetch(`${API_URL}/api/game/c4/move`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ game_id: g.id, user_id: getUserId(), col: col }) });
             const d = await r.json();
             if (d.success) {
                 currentC4Game = { ...currentC4Game, board: d.board, status: d.status, winner_id: d.winner_id };
                 renderC4Board();
-
-                if (d.status === 'active') {
-                    setTimeout(async () => {
-                        await loadC4State(g.id);
-                    }, 500);
-                } else {
-                    await loadC4State(g.id);
-                }
+                if (d.status === 'active') setTimeout(async () => { await loadC4State(g.id); }, 500);
+                else await loadC4State(g.id);
             }
         } catch (e) {}
     }
@@ -696,35 +789,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (d.success) { currentC4Game = d.game; renderC4Board(); }
             } catch (e) {}
         }, 3000);
-    }
-
-    // ===== РЕЙТИНГ =====
-    async function showLeaderboard() {
-        currentView = 'game_leaderboard';
-        setBackBtnVisible(true);
-        stopGameTimer(); stopC4Timer();
-        render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray;">Загрузка...</p>`);
-        try {
-            const r = await fetch(`${API_URL}/api/game/leaderboard`, { headers: HEADERS });
-            const d = await r.json();
-            if (!d.success || !d.leaderboard.length) {
-                render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray; margin-top:20px;">Пока никого нет.</p>`);
-                return;
-            }
-            let html = `<h2>🏆 Рейтинг</h2><div style="margin-top:12px;">`;
-            d.leaderboard.forEach((p, i) => {
-                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
-                const isMe = p.user_id === getUserId();
-                const bg = isMe ? 'background: rgba(51, 144, 236, 0.1);' : '';
-                html += `<div style="display:flex; align-items:center; padding:10px 12px; border-radius:10px; margin-bottom:6px; ${bg}">
-                    <div style="font-size:18px; width:36px;">${medal}</div>
-                    <div style="flex:1;"><div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
-                    <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div></div>
-                    <div style="font-weight:700; color:#3390ec;">${p.rating}</div></div>`;
-            });
-            html += `</div>`;
-            render(html);
-        } catch (e) { render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:red;">Ошибка</p>`); }
     }
 
     // ===== СОБЫТИЯ =====
@@ -805,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const ev = publicEvents.find(e => e.id == id); if (!ev) return;
         currentView = 'edit'; setBackBtnVisible(true);
         let img = ev.image && imageCache[ev.image] ? `<img src="${imageCache[ev.image]}" class="event-full-image" alt="">` : '';
-        render(`<h2>🌍 ${escapeHtml(ev.name)}</h2>${img}<p><b>📅 Дата:</b> ${ev.date}</p>${ev.description ? `<p><b>📝 Описание:</b></p><p>${escapeHtml(ev.description)}</p>` : ''}<p style="font-size:12px;color:gray;">от @${escapeHtml(ev.username || 'неизвестный')}</p><button class="action-btn secondary" id="backToListBtn">🔙 К списку</button>`);
+        render(`<h2>🌍 ${escapeHtml(ev.name)}</h2>${img}<p><b>📅 Дата:</b> ${ev.date}</p>${ev.description ? `<p><b>📝 Описание:</b></p><p>${escapeHtml(ev.description)}</p>` : ''}<p style="font-size:12px;color:var(--text-dim);">от @${escapeHtml(ev.username || 'неизвестный')}</p><button class="action-btn secondary" id="backToListBtn">🔙 К списку</button>`);
         document.getElementById('backToListBtn').addEventListener('click', showPublicEvents);
     }
 
@@ -821,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const isPublic = ev ? ev.is_public : false, descLen = desc.length;
         let imageBlock = editingImageFilename && imageCache[editingImageFilename]
             ? `<img src="${imageCache[editingImageFilename]}" class="event-preview-image" alt=""><button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>`
-            : `<p style="font-size:13px;color:gray;">Фото не загружено</p>`;
+            : `<p style="font-size:13px;color:var(--text-dim);">Фото не загружено</p>`;
         render(`
             <h2>${title}</h2>
             <div class="form-group"><label>📷 Фото</label><div id="imagePreviewContainer">${imageBlock}</div><input type="file" id="edit-image-input" accept="image/*" style="display:none;"><button type="button" class="action-btn" id="uploadImageBtn" style="margin-top:8px;">📷 Загрузить фото</button></div>
@@ -845,12 +909,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const localUrl = URL.createObjectURL(f);
                 imageCache[editingImageFilename] = localUrl;
                 document.getElementById('imagePreviewContainer').innerHTML = `<img src="${localUrl}" class="event-preview-image" alt=""><button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>`;
-                document.getElementById('removeImageBtn').addEventListener('click', function() { editingImageFilename = ''; document.getElementById('imagePreviewContainer').innerHTML = `<p style="font-size:13px;color:gray;">Фото не загружено</p>`; });
+                document.getElementById('removeImageBtn').addEventListener('click', function() { editingImageFilename = ''; document.getElementById('imagePreviewContainer').innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Фото не загружено</p>`; });
             }
             ub.textContent = '📷 Загрузить фото'; ub.disabled = false; fi.value = '';
         });
         const rb = document.getElementById('removeImageBtn');
-        if (rb) rb.addEventListener('click', function() { editingImageFilename = ''; document.getElementById('imagePreviewContainer').innerHTML = `<p style="font-size:13px;color:gray;">Фото не загружено</p>`; });
+        if (rb) rb.addEventListener('click', function() { editingImageFilename = ''; document.getElementById('imagePreviewContainer').innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Фото не загружено</p>`; });
         document.getElementById('saveBtn').addEventListener('click', saveEvent);
         document.getElementById('cancelEditBtn').addEventListener('click', function() { currentView = 'events'; showEvents(); });
     }
@@ -878,11 +942,11 @@ document.addEventListener('DOMContentLoaded', function() {
         stopLottie(); destroyChart(); stopGameTimer(); stopC4Timer();
         if (currentView === 'edit') { currentView = 'events'; showEvents(); }
         else if (currentView === 'chart') { currentView = 'rates'; showRates(); }
-        else if (currentView === 'game_ttt' || currentView === 'game_c4' || currentView === 'game_leaderboard') { currentView = 'games'; showGamesMenu(); }
+        else if (currentView === 'game_ttt' || currentView === 'game_c4') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
+        else if (currentView === 'platform') { showMainMenu(); }
         else { showMainMenu(); }
     });
 
-    // Закрытие Морского боя
     document.getElementById('closeBattleshipBtn').addEventListener('click', function() {
         document.getElementById('battleship-container').style.display = 'none';
     });
@@ -896,7 +960,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (a === 'weather') btn.addEventListener('click', showWeather);
             else if (a === 'mouse') btn.addEventListener('click', showMouseDay);
             else if (a === 'events') btn.addEventListener('click', showEvents);
-            else if (a === 'games') btn.addEventListener('click', showGamesMenu);
+            else if (a === 'games') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
         });
     }
 
