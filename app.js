@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===== ИНИЦИАЛИЗАЦИЯ TELEGRAM =====
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
         tg = window.Telegram.WebApp;
@@ -13,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
     const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
 
-    // ===== АНИМАЦИИ =====
     const MOUSE_ANIMATIONS = [
         'animations/mouse-scroll.json',
         'animations/mouse-move.json',
@@ -31,7 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hurricane: 'animations/hurricane.json'
     };
 
-    // ===== СОСТОЯНИЕ =====
     let events = [], publicEvents = [], rates = null, weather = null, mouseDay = null;
     let currentView = 'main';
     let showHidden = false;
@@ -42,12 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentRatePair = null;
     const imageCache = {};
 
-    // ===== СОСТОЯНИЕ ИГР =====
-    let currentGame = null;         // Данные текущей игры
-    let gameRefreshTimer = null;    // Таймер обновления игры
-    let selectedCell = null;
+    let currentGame = null;
+    let gameRefreshTimer = null;
 
-    // ===== УТИЛИТЫ =====
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.id;
         return 0;
@@ -82,7 +76,6 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (e) {}
     }
 
-    // ===== API =====
     async function fetchAllData() {
         try {
             const uid = getUserId();
@@ -119,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function hideEventApi(id, h) { const r = await fetch(`${API_URL}/api/event/${id}/hide`, { method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS }, body: JSON.stringify({ user_id: getUserId(), is_hidden: h }) }); return r.json(); }
     async function uploadImageApi(file) { const fd = new FormData(); fd.append('image', file); const r = await fetch(`${API_URL}/api/upload_image`, { method: 'POST', headers: HEADERS, body: fd }); return r.json(); }
 
-    // ===== ВИДЫ =====
     function renderCurrentView() {
         if (currentView !== 'mouse' && currentView !== 'weather') stopLottie();
         if (currentView !== 'game_ttt') stopGameTimer();
@@ -141,28 +133,16 @@ document.addEventListener('DOMContentLoaded', function() {
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
-    // ===== КУРСЫ =====
     function showRates() {
         currentView = 'rates'; setBackBtnVisible(true); destroyChart();
         if (!rates) { render(`<h2>💵 Курсы валют</h2><p>Загрузка...</p>`); return; }
-
         render(`
             <h2>💵 Курсы валют</h2>
-            <div class="rate-item" data-pair="USD-RUB">
-                <span class="rate-label">🇺🇸 1 USD</span>
-                <span class="rate-value">${rates.usd_rub} RUB</span>
-            </div>
-            <div class="rate-item" data-pair="USD-THB">
-                <span class="rate-label">🇺🇸 1 USD</span>
-                <span class="rate-value">${rates.usd_thb} THB</span>
-            </div>
-            <div class="rate-item" data-pair="THB-RUB">
-                <span class="rate-label">🇹🇭 1 THB</span>
-                <span class="rate-value">${rates.thb_rub} RUB</span>
-            </div>
+            <div class="rate-item" data-pair="USD-RUB"><span class="rate-label">🇺🇸 1 USD</span><span class="rate-value">${rates.usd_rub} RUB</span></div>
+            <div class="rate-item" data-pair="USD-THB"><span class="rate-label">🇺🇸 1 USD</span><span class="rate-value">${rates.usd_thb} THB</span></div>
+            <div class="rate-item" data-pair="THB-RUB"><span class="rate-label">🇹🇭 1 THB</span><span class="rate-value">${rates.thb_rub} RUB</span></div>
             <p style="font-size:12px; color:gray; margin-top:12px; text-align:center;">Нажми на курс, чтобы увидеть график</p>
         `);
-
         document.querySelectorAll('.rate-item').forEach(el => {
             el.addEventListener('click', () => {
                 currentRatePair = el.getAttribute('data-pair');
@@ -172,12 +152,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== ГРАФИК =====
     async function showChartScreen() {
         setBackBtnVisible(true);
         const [fromCur, toCur] = currentRatePair.split('-');
         const pairLabel = `${fromCur} → ${toCur}`;
-
         const currentPrice = getCurrentRate(fromCur, toCur);
         const currentPriceText = currentPrice !== null ? currentPrice.toFixed(currentPrice < 1 ? 4 : 2) : '—';
 
@@ -196,12 +174,10 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="chart-container"><canvas id="rateChart"></canvas></div>
             <div id="chartMinMax" style="display:flex; justify-content:space-between; font-size:12px; color:gray; margin-top:8px; padding: 0 4px;">
-                <span>Мин: —</span>
-                <span>Макс: —</span>
+                <span>Мин: —</span><span>Макс: —</span>
             </div>
             <p style="font-size:11px; color:gray; text-align:center; margin-top:8px;" id="chartInfo">Загрузка...</p>
         `);
-
         document.querySelectorAll('.period-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
@@ -209,7 +185,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 loadChart(fromCur, toCur, parseInt(btn.getAttribute('data-days')));
             });
         });
-
         loadChart(fromCur, toCur, 7);
     }
 
@@ -227,24 +202,17 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 url = `${API_URL}/api/rates/history?from=${fromCur}&to=${toCur}&days=${days}`;
             }
-
             const r = await fetch(url, { headers: HEADERS });
             const d = await r.json();
-
-            if (!d.success) {
-                document.getElementById('chartInfo').textContent = '❌ ' + (d.error || 'Не удалось загрузить');
-                return;
-            }
+            if (!d.success) { document.getElementById('chartInfo').textContent = '❌ ' + (d.error || 'Ошибка'); return; }
 
             const values = d.values;
             const currentPrice = getCurrentRate(fromCur, toCur);
             const firstValue = values[0];
             const minValue = Math.min(...values);
             const maxValue = Math.max(...values);
-
             const diff = currentPrice - firstValue;
             const diffPercent = (diff / firstValue) * 100;
-
             const decimals = currentPrice < 1 ? 4 : 2;
 
             const changeEl = document.getElementById('chartChange');
@@ -255,9 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 changeEl.style.color = '#e74c3c';
                 changeEl.textContent = `за ${days} дн.: ▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
             }
-
-            document.getElementById('chartMinMax').innerHTML =
-                `<span>Мин: ${minValue.toFixed(decimals)}</span><span>Макс: ${maxValue.toFixed(decimals)}</span>`;
+            document.getElementById('chartMinMax').innerHTML = `<span>Мин: ${minValue.toFixed(decimals)}</span><span>Макс: ${maxValue.toFixed(decimals)}</span>`;
 
             const lineColor = diff >= 0 ? '#27ae60' : '#e74c3c';
             const gradientColorTop = diff >= 0 ? 'rgba(39, 174, 96, 0.3)' : 'rgba(231, 76, 60, 0.3)';
@@ -271,36 +237,19 @@ document.addEventListener('DOMContentLoaded', function() {
             currentChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: d.dates.map(date => {
-                        const [y, m, day] = date.split('-');
-                        return `${day}.${m}`;
-                    }),
+                    labels: d.dates.map(date => { const [y, m, day] = date.split('-'); return `${day}.${m}`; }),
                     datasets: [{
-                        label: `${d.from}/${d.to}`,
-                        data: values,
-                        borderColor: lineColor,
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 0,
-                        pointHoverRadius: 5,
-                        pointHoverBackgroundColor: lineColor
+                        label: `${d.from}/${d.to}`, data: values,
+                        borderColor: lineColor, backgroundColor: gradient,
+                        borderWidth: 2, fill: true, tension: 0.4,
+                        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: lineColor
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            padding: 10,
-                            cornerRadius: 10,
-                            callbacks: {
-                                label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}`
-                            }
-                        }
+                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 10, callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}` } }
                     },
                     scales: {
                         x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 11 } } },
@@ -309,14 +258,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     interaction: { intersect: false, mode: 'index' }
                 }
             });
-
             document.getElementById('chartInfo').textContent = `Обновлено: ${new Date().toLocaleTimeString()}`;
-        } catch (e) {
-            document.getElementById('chartInfo').textContent = '❌ Ошибка загрузки';
-        }
+        } catch (e) { document.getElementById('chartInfo').textContent = '❌ Ошибка загрузки'; }
     }
 
-    // ===== ПОГОДА =====
     function showWeather() {
         currentView = 'weather'; setBackBtnVisible(true);
         if (!weather) { render(`<h2>🌴 Погода</h2><p>Загрузка...</p>`); return; }
@@ -342,7 +287,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return isDay ? WEATHER_ANIMATIONS.clearDay : WEATHER_ANIMATIONS.clearNight;
     }
 
-    // ===== ДЕНЬ МЫШИ =====
     function showMouseDay() {
         currentView = 'mouse'; setBackBtnVisible(true);
         const days = mouseDay !== null ? mouseDay : '...';
@@ -358,67 +302,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (c && window.lottie) { stopLottie(); lottieAnimation = lottie.loadAnimation({ container: c, renderer: 'svg', loop: true, autoplay: true, path: anim }); }
     }
 
-    // ===== ИГРЫ: МЕНЮ =====
     function showGamesMenu() {
         currentView = 'games'; setBackBtnVisible(true); stopGameTimer();
         render(`
             <h2>🎮 Игры</h2>
             <button class="action-btn" id="tttBtn">❌⭕ Крестики-нолики</button>
             <button class="action-btn secondary" id="leaderboardBtn">🏆 Рейтинг</button>
-            <p style="font-size:12px; color:gray; margin-top:16px; text-align:center;">
-                Играй с друзьями или с ботом
-            </p>
         `);
-        document.getElementById('tttBtn').addEventListener('click', () => {
-            currentView = 'game_ttt';
-            showTicTacToe();
-        });
-        document.getElementById('leaderboardBtn').addEventListener('click', () => {
-            currentView = 'game_leaderboard';
-            showLeaderboard();
-        });
+        document.getElementById('tttBtn').addEventListener('click', () => { currentView = 'game_ttt'; showTicTacToe(); });
+        document.getElementById('leaderboardBtn').addEventListener('click', () => { currentView = 'game_leaderboard'; showLeaderboard(); });
     }
 
-    // ===== КРЕСТИКИ-НОЛИКИ =====
     async function showTicTacToe() {
         currentView = 'game_ttt';
         setBackBtnVisible(true);
-
         const user_id = getUserId();
-        const username = getUsername();
-
-        // Загружаем активную игру
         try {
             const r = await fetch(`${API_URL}/api/game/my_active?user_id=${user_id}`, { headers: HEADERS });
             const d = await r.json();
-
             if (d.success && d.games && d.games.length > 0) {
-                // Есть активная игра — загружаем её
-                const game_id = d.games[0].id;
-                await loadGameState(game_id);
+                await loadGameState(d.games[0].id);
             } else {
-                // Нет активной — показываем меню создания
                 renderTttLobby();
             }
-        } catch (e) {
-            console.error(e);
-            renderTttLobby();
-        }
+        } catch (e) { renderTttLobby(); }
     }
 
     function renderTttLobby() {
         render(`
             <h2>❌⭕ Крестики-нолики</h2>
-            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">
-                Создай игру и пригласи друга, или сыграй с ботом
-            </p>
+            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга</p>
             <button class="action-btn" id="createGameBtn">➕ Создать игру</button>
             <button class="action-btn secondary" id="botGameBtn">🤖 Играть с ботом</button>
-            <p style="font-size:12px; color:gray; margin-top:20px; text-align:center;">
-                Ты будешь играть за ❌
-            </p>
         `);
-
         document.getElementById('createGameBtn').addEventListener('click', createGame);
         document.getElementById('botGameBtn').addEventListener('click', startBotGame);
     }
@@ -431,16 +347,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ user_id: getUserId() })
             });
             const d = await r.json();
-            if (d.success) {
-                await loadGameState(d.game_id);
-            } else {
-                alert('Ошибка: ' + (d.error || 'не удалось создать игру'));
-            }
-        } catch (e) { alert('Ошибка сети'); }
+            if (d.success) await loadGameState(d.game_id);
+        } catch (e) { alert('Ошибка'); }
     }
 
     async function startBotGame() {
-        alert('🤖 Игра с ботом — в разработке. Пока играй с друзьями!');
+        alert('🤖 Игра с ботом — в разработке.');
     }
 
     async function loadGameState(game_id) {
@@ -448,56 +360,28 @@ document.addEventListener('DOMContentLoaded', function() {
             const user_id = getUserId();
             const r = await fetch(`${API_URL}/api/game/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
             const d = await r.json();
-
-            if (!d.success) {
-                alert('Игра не найдена');
-                renderTttLobby();
-                return;
-            }
-
+            if (!d.success) { renderTttLobby(); return; }
             currentGame = d.game;
             renderGameBoard();
             startGameAutoRefresh(game_id);
-        } catch (e) {
-            console.error(e);
-            renderTttLobby();
-        }
+        } catch (e) { renderTttLobby(); }
     }
 
     function renderGameBoard() {
         const g = currentGame;
         const board = g.board.split('');
-        const mySymbol = g.my_symbol;
 
-        // Заголовок статуса
-        let statusText = '';
-        let statusColor = 'gray';
-
-        if (g.status === 'waiting') {
-            statusText = '⏳ Ждём соперника...';
-            statusColor = '#f39c12';
-        } else if (g.status === 'active') {
-            if (g.is_my_turn) {
-                statusText = '🎯 Твой ход';
-                statusColor = '#27ae60';
-            } else {
-                statusText = '⏳ Ход соперника';
-                statusColor = '#e67e22';
-            }
+        let statusText = '', statusColor = 'gray';
+        if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
+        else if (g.status === 'active') {
+            if (g.is_my_turn) { statusText = '🎯 Твой ход'; statusColor = '#27ae60'; }
+            else { statusText = '⏳ Ход соперника'; statusColor = '#e67e22'; }
         } else if (g.status === 'finished') {
-            if (g.winner_id === getUserId()) {
-                statusText = '🏆 Ты победил!';
-                statusColor = '#27ae60';
-            } else if (g.winner_id === null) {
-                statusText = '🤝 Ничья';
-                statusColor = '#3498db';
-            } else {
-                statusText = '😔 Ты проиграл';
-                statusColor = '#e74c3c';
-            }
+            if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = '#27ae60'; }
+            else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = '#3498db'; }
+            else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
         }
 
-        // Доска
         let boardHtml = '<div class="ttt-board">';
         for (let i = 0; i < 9; i++) {
             const cell = board[i];
@@ -507,113 +391,66 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         boardHtml += '</div>';
 
-        // Информация о сопернике
-        let opponentInfo = '';
-        if (g.opponent_username) {
-            opponentInfo = `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: @${escapeHtml(g.opponent_username)}</p>`;
-        }
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: @${escapeHtml(g.opponent_username)}</p>` : '';
 
-        // Кнопки
         let buttonsHtml = '';
         if (g.status === 'waiting') {
-            buttonsHtml = `
-                <button class="action-btn" id="inviteBtn">📨 Пригласить друга</button>
-                <button class="action-btn secondary" id="cancelGameBtn">❌ Отменить игру</button>
-            `;
+            buttonsHtml = `<button class="action-btn" id="inviteBtn">📨 Пригласить друга</button><button class="action-btn secondary" id="cancelGameBtn">❌ Отменить</button>`;
         } else if (g.status === 'finished') {
-            buttonsHtml = `
-                <button class="action-btn" id="newGameBtn">🔄 Новая игра</button>
-                <button class="action-btn secondary" id="backToGamesBtn">🔙 К играм</button>
-            `;
+            buttonsHtml = `<button class="action-btn" id="newGameBtn">🔄 Новая игра</button><button class="action-btn secondary" id="backToGamesBtn">🔙 К играм</button>`;
         } else {
             buttonsHtml = `<button class="action-btn secondary" id="leaveGameBtn">🚪 Выйти</button>`;
         }
 
         render(`
             <h2>❌⭕ Игра #${g.id}</h2>
-            <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:16px;">
-                ${statusText}
-            </p>
+            <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:16px;">${statusText}</p>
             ${boardHtml}
             ${opponentInfo}
-            <div style="margin-top:20px;">
-                ${buttonsHtml}
-            </div>
+            <div style="margin-top:20px;">${buttonsHtml}</div>
         `);
 
-        // Навешиваем обработчики на клетки
         document.querySelectorAll('.ttt-cell[data-clickable="1"]').forEach(cell => {
-            cell.addEventListener('click', function() {
-                const pos = parseInt(this.getAttribute('data-pos'));
-                makeMove(pos);
-            });
+            cell.addEventListener('click', function() { makeMove(parseInt(this.getAttribute('data-pos'))); });
         });
 
-        // Кнопки
         const inviteBtn = document.getElementById('inviteBtn');
         if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id));
-
         const cancelBtn = document.getElementById('cancelGameBtn');
         if (cancelBtn) cancelBtn.addEventListener('click', cancelCurrentGame);
-
         const newGameBtn = document.getElementById('newGameBtn');
-        if (newGameBtn) newGameBtn.addEventListener('click', () => {
-            stopGameTimer();
-            currentGame = null;
-            renderTttLobby();
-        });
-
+        if (newGameBtn) newGameBtn.addEventListener('click', () => { stopGameTimer(); currentGame = null; renderTttLobby(); });
         const backBtn = document.getElementById('backToGamesBtn');
-        if (backBtn) backBtn.addEventListener('click', () => {
-            stopGameTimer();
-            showGamesMenu();
-        });
-
+        if (backBtn) backBtn.addEventListener('click', () => { stopGameTimer(); showGamesMenu(); });
         const leaveBtn = document.getElementById('leaveGameBtn');
-        if (leaveBtn) leaveBtn.addEventListener('click', () => {
-            stopGameTimer();
-            showGamesMenu();
-        });
+        if (leaveBtn) leaveBtn.addEventListener('click', () => { stopGameTimer(); showGamesMenu(); });
     }
 
     async function makeMove(position) {
         const g = currentGame;
         if (!g || g.status !== 'active' || !g.is_my_turn) return;
-
         try {
             const r = await fetch(`${API_URL}/api/game/move`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({
-                    game_id: g.id,
-                    user_id: getUserId(),
-                    position: position
-                })
+                body: JSON.stringify({ game_id: g.id, user_id: getUserId(), position: position })
             });
             const d = await r.json();
-            if (d.success) {
-                await loadGameState(g.id);
-            }
-        } catch (e) { console.error(e); }
+            if (d.success) await loadGameState(g.id);
+        } catch (e) {}
     }
 
     function startGameAutoRefresh(game_id) {
         stopGameTimer();
         gameRefreshTimer = setInterval(async () => {
-            if (currentView !== 'game_ttt') {
-                stopGameTimer();
-                return;
-            }
+            if (currentView !== 'game_ttt') { stopGameTimer(); return; }
             try {
                 const user_id = getUserId();
                 const r = await fetch(`${API_URL}/api/game/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
                 const d = await r.json();
-                if (d.success) {
-                    currentGame = d.game;
-                    renderGameBoard();
-                }
+                if (d.success) { currentGame = d.game; renderGameBoard(); }
             } catch (e) {}
-        }, 3000);  // каждые 3 секунды
+        }, 3000);
     }
 
     function openInviteDialog(game_id) {
@@ -627,32 +464,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const r = await fetch(`${API_URL}/api/game/invite`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', ...HEADERS },
-                body: JSON.stringify({ game_id, username })
+                body: JSON.stringify({ game_id: game_id, username: username, from_username: getUsername() })
             });
             const d = await r.json();
-
-            if (!d.success) {
-                alert('❌ Не удалось найти игрока: ' + (d.error || 'unknown'));
-                return;
-            }
-
-            // Просим бота отправить приглашение
-            const inviteData = {
-                action: 'invite',
-                game_id: game_id,
-                invited_user_id: d.invited_user_id,
-                invited_username: d.invited_username,
-                from_username: getUsername()
-            };
-
-            if (tg) {
-                tg.sendData(JSON.stringify(inviteData));
-            }
-
+            if (!d.success) { alert('❌ Не удалось найти игрока: ' + (d.error || 'unknown')); return; }
             alert(`✅ Приглашение отправлено @${d.invited_username}!\nДруг получит уведомление в боте.`);
-        } catch (e) {
-            alert('Ошибка при отправке приглашения');
-        }
+        } catch (e) { alert('Ошибка'); }
     }
 
     async function cancelCurrentGame() {
@@ -662,55 +479,37 @@ document.addEventListener('DOMContentLoaded', function() {
         renderTttLobby();
     }
 
-    // ===== РЕЙТИНГ =====
     async function showLeaderboard() {
         currentView = 'game_leaderboard';
         setBackBtnVisible(true);
         stopGameTimer();
-
         render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray;">Загрузка...</p>`);
-
         try {
             const r = await fetch(`${API_URL}/api/game/leaderboard`, { headers: HEADERS });
             const d = await r.json();
-
             if (!d.success || !d.leaderboard.length) {
-                render(`
-                    <h2>🏆 Рейтинг</h2>
-                    <p style="text-align:center; color:gray; margin-top:20px;">Пока никого нет.<br>Сыграй первым!</p>
-                    <button class="action-btn" id="playNowBtn">🎮 Играть</button>
-                `);
-                document.getElementById('playNowBtn').addEventListener('click', () => {
-                    currentView = 'game_ttt';
-                    showTicTacToe();
-                });
+                render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray; margin-top:20px;">Пока никого нет.</p>`);
                 return;
             }
-
             let html = `<h2>🏆 Рейтинг</h2><div style="margin-top:12px;">`;
             d.leaderboard.forEach((p, i) => {
                 const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
                 const isMe = p.user_id === getUserId();
                 const bg = isMe ? 'background: rgba(51, 144, 236, 0.1);' : '';
-                html += `
-                    <div style="display:flex; align-items:center; padding:10px 12px; border-radius:10px; margin-bottom:6px; ${bg}">
-                        <div style="font-size:18px; width:36px;">${medal}</div>
-                        <div style="flex:1;">
-                            <div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
-                            <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div>
-                        </div>
-                        <div style="font-weight:700; color:#3390ec;">${p.rating}</div>
+                html += `<div style="display:flex; align-items:center; padding:10px 12px; border-radius:10px; margin-bottom:6px; ${bg}">
+                    <div style="font-size:18px; width:36px;">${medal}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
+                        <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div>
                     </div>
-                `;
+                    <div style="font-weight:700; color:#3390ec;">${p.rating}</div>
+                </div>`;
             });
             html += `</div>`;
             render(html);
-        } catch (e) {
-            render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:red;">Ошибка загрузки</p>`);
-        }
+        } catch (e) { render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:red;">Ошибка</p>`); }
     }
 
-    // ===== СОБЫТИЯ =====
     function showEvents() {
         currentView = 'events'; setBackBtnVisible(true);
         let html = `<h2>📅 Мои события</h2>${renderTabs('mine')}<div class="events-list">`;
@@ -729,7 +528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = `<h2>🌍 Общие события</h2>${renderTabs('public')}<div class="events-list">`;
         if (!publicEvents || publicEvents.length === 0) html += `<p>Общих событий пока нет</p>`;
         else publicEvents.forEach(e => { html += renderEventCard(e, false); });
-        html += `</div><p style="font-size:12px;color:gray;text-align:center;margin-top:12px;">Все пользователи видят эти события</p>`;
+        html += `</div>`;
         render(html);
         setupEventCardHandlers(false);
     }
@@ -757,7 +556,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const tm = document.getElementById('tabMine'), tp = document.getElementById('tabPublic');
         if (tm) tm.addEventListener('click', showEvents);
         if (tp) tp.addEventListener('click', showPublicEvents);
-
         if (isMine) {
             document.querySelectorAll('[data-role="toggle-menu"]').forEach(btn => {
                 btn.addEventListener('click', function(ev) {
@@ -773,7 +571,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('[data-role="hide"]').forEach(btn => btn.addEventListener('click', async function() { await hideEventApi(this.getAttribute('data-id'), this.getAttribute('data-hidden') !== '1'); await fetchAllData(); }));
             document.querySelectorAll('[data-role="delete"]').forEach(btn => btn.addEventListener('click', function() { const ev = events.find(e => e.id == this.getAttribute('data-id')); if (ev) openConfirmDelete(ev); }));
         }
-
         document.querySelectorAll('[data-role="open-edit"]').forEach(el => {
             el.addEventListener('click', function(ev) {
                 if (ev.target.closest('[data-role="toggle-menu"]')) return;
@@ -807,7 +604,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let imageBlock = editingImageFilename && imageCache[editingImageFilename]
             ? `<img src="${imageCache[editingImageFilename]}" class="event-preview-image" alt=""><button type="button" class="action-btn secondary" id="removeImageBtn" style="margin-top:8px;">🗑️ Удалить фото</button>`
             : `<p style="font-size:13px;color:gray;">Фото не загружено</p>`;
-
         render(`
             <h2>${title}</h2>
             <div class="form-group"><label>📷 Фото</label><div id="imagePreviewContainer">${imageBlock}</div><input type="file" id="edit-image-input" accept="image/*" style="display:none;"><button type="button" class="action-btn" id="uploadImageBtn" style="margin-top:8px;">📷 Загрузить фото</button></div>
@@ -818,7 +614,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <button class="action-btn" id="saveBtn">💾 Сохранить</button>
             <button class="action-btn secondary" id="cancelEditBtn">❌ Отмена</button>
         `);
-
         document.getElementById('edit-desc').addEventListener('input', function() { document.getElementById('charCounter').textContent = this.value.length + ' / 200'; });
         const fi = document.getElementById('edit-image-input'), ub = document.getElementById('uploadImageBtn');
         ub.addEventListener('click', () => fi.click());
