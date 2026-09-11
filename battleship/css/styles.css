@@ -1,0 +1,1312 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #0A2A43 0%, #1B4F72 50%, #2ECC71 100%);
+    min-height: 100vh;
+    color: #ffffff;
+    overflow-x: hidden;
+}
+
+.game-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+.game-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.game-header h1 {
+    font-size: 3rem;
+    color: #2ECC71;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+    letter-spacing: 3px;
+}
+
+.game-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(10, 42, 67, 0.8);
+    padding: 15px 30px;
+    border-radius: 15px;
+    border: 2px solid #2ECC71;
+}
+
+.turn-indicator {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2ECC71;
+}
+
+.ships-remaining {
+    display: flex;
+    gap: 40px;
+}
+
+.player-ships, .computer-ships {
+    text-align: center;
+}
+
+.player-ships h3, .computer-ships h3 {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: #ffffff;
+}
+
+#player-ships-count, #computer-ships-count {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #2ECC71;
+}
+
+/* Setup Phase Styles */
+.game-setup {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.setup-controls {
+    flex: 1;
+    background: rgba(10, 42, 67, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    border: 2px solid #2ECC71;
+}
+
+.setup-controls h2 {
+    color: #2ECC71;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+.ship-selection {
+    margin-bottom: 30px;
+}
+
+.ship-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(46, 204, 113, 0.1);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ship-item:hover {
+    background: rgba(46, 204, 113, 0.2);
+    border-color: #2ECC71;
+}
+
+.ship-item.active {
+    background: rgba(46, 204, 113, 0.3);
+    border-color: #2ECC71;
+    box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+}
+
+.ship-item.placed {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ship-name {
+    flex: 1;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.ship-preview {
+    display: flex;
+    gap: 2px;
+    margin: 0 15px;
+    align-items: center;
+}
+
+.carrier-preview {
+    display: flex;
+    gap: 1px;
+}
+
+.carrier-preview::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #E67E22, #D35400);
+    border: 1px solid #E67E22;
+    border-radius: 50% 3px 3px 50%;
+}
+
+.carrier-preview::after {
+    content: '';
+    width: 64px;
+    height: 16px;
+    background: linear-gradient(135deg, #2C3E50, #34495E);
+    border: 1px solid #5D6D7E;
+    border-radius: 3px;
+    margin-left: -1px;
+}
+
+.battleship-preview {
+    display: flex;
+    gap: 1px;
+}
+
+.battleship-preview::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #E67E22, #D35400);
+    border: 1px solid #E67E22;
+    border-radius: 50% 3px 3px 50%;
+}
+
+.battleship-preview::after {
+    content: '';
+    width: 48px;
+    height: 16px;
+    background: linear-gradient(135deg, #1B4F72, #2E86AB);
+    border: 1px solid #2E86AB;
+    border-radius: 3px;
+    margin-left: -1px;
+}
+
+.cruiser-preview, .submarine-preview {
+    display: flex;
+    gap: 1px;
+}
+
+.cruiser-preview::before, .submarine-preview::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #E67E22, #D35400);
+    border: 1px solid #E67E22;
+    border-radius: 50% 3px 3px 50%;
+}
+
+.cruiser-preview::after {
+    content: '';
+    width: 32px;
+    height: 16px;
+    background: linear-gradient(135deg, #148F77, #16A085);
+    border: 1px solid #16A085;
+    border-radius: 3px;
+    margin-left: -1px;
+}
+
+.submarine-preview::after {
+    content: '';
+    width: 32px;
+    height: 16px;
+    background: linear-gradient(135deg, #7D3C98, #8E44AD);
+    border: 1px solid #8E44AD;
+    border-radius: 3px;
+    margin-left: -1px;
+}
+
+.destroyer-preview {
+    display: flex;
+    gap: 1px;
+}
+
+.destroyer-preview::before {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #E67E22, #D35400);
+    border: 1px solid #E67E22;
+    border-radius: 50% 3px 3px 50%;
+}
+
+.destroyer-preview::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #B7950B, #F1C40F);
+    border: 1px solid #F1C40F;
+    border-radius: 3px 50% 50% 3px;
+    margin-left: -1px;
+}
+
+.ship-size {
+    color: #2ECC71;
+    font-weight: bold;
+}
+
+.setup-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.setup-buttons button {
+    padding: 12px 20px;
+    background: #2ECC71;
+    color: #0A2A43;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.setup-buttons button:hover:not(:disabled) {
+    background: #27AE60;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.setup-buttons button:disabled {
+    background: #7F8C8D;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.setup-grid {
+    flex: 1;
+}
+
+.setup-grid h3 {
+    color: #2ECC71;
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+}
+
+/* Grid Styles */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: 2px;
+    background: #0A2A43;
+    padding: 10px;
+    border-radius: 10px;
+    border: 3px solid #2ECC71;
+    width: 400px;
+    height: 400px;
+    margin: 0 auto;
+}
+
+.cell {
+    background: #1B4F72;
+    border: 1px solid #2ECC71;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cell:hover {
+    background: rgba(46, 204, 113, 0.3);
+    transform: scale(1.05);
+}
+
+/* Ship styling - individual parts */
+.cell.ship {
+    background: linear-gradient(135deg, #34495E 0%, #2C3E50 50%, #1A252F 100%);
+    border: 2px solid #2ECC71;
+    box-shadow: inset 0 0 10px rgba(10, 42, 67, 0.8), 0 0 5px rgba(46, 204, 113, 0.3);
+    position: relative;
+}
+
+/* Ship part types */
+.cell.ship.bow {
+    background: linear-gradient(135deg, #E67E22 0%, #D35400 50%, #A0522D 100%);
+    border-radius: 50% 50% 10px 10px;
+    border-color: #E67E22;
+}
+
+.cell.ship.stern {
+    background: linear-gradient(135deg, #8E44AD 0%, #7D3C98 50%, #6C3483 100%);
+    border-radius: 10px 10px 50% 50%;
+    border-color: #8E44AD;
+}
+
+.cell.ship.hull {
+    background: linear-gradient(135deg, #34495E 0%, #2C3E50 50%, #1A252F 100%);
+    border-radius: 5px;
+    border-color: #2ECC71;
+}
+
+/* Ship orientation styling */
+.cell.ship.bow.horizontal {
+    border-radius: 50% 10px 10px 50%;
+}
+
+.cell.ship.stern.horizontal {
+    border-radius: 10px 50% 50% 10px;
+}
+
+.cell.ship.bow.vertical {
+    border-radius: 50% 50% 10px 10px;
+}
+
+.cell.ship.stern.vertical {
+    border-radius: 10px 10px 50% 50%;
+}
+
+/* Ship details overlay */
+.cell.ship::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    background: linear-gradient(45deg, 
+        rgba(255, 255, 255, 0.1) 0%, 
+        rgba(255, 255, 255, 0.05) 50%, 
+        rgba(0, 0, 0, 0.1) 100%);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Ship deck details */
+.cell.ship::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%;
+    height: 20%;
+    background: rgba(46, 204, 113, 0.3);
+    border-radius: 2px;
+    pointer-events: none;
+}
+
+.cell.ship.bow::after {
+    width: 40%;
+    height: 40%;
+    border-radius: 50%;
+    background: rgba(230, 126, 34, 0.4);
+}
+
+.cell.ship.stern::after {
+    width: 50%;
+    height: 30%;
+    border-radius: 3px;
+    background: rgba(142, 68, 173, 0.4);
+}
+
+.cell.hit {
+    background: #E74C3C;
+    animation: explosion 0.6s ease-out;
+}
+
+.cell.miss {
+    background: #3498DB;
+    animation: splash 0.6s ease-out;
+}
+
+.cell.hit::after {
+    content: '💥';
+    font-size: 1.5rem;
+    animation: bounce 0.5s ease-out;
+}
+
+.cell.miss::after {
+    content: '💧';
+    font-size: 1.2rem;
+    animation: ripple 0.8s ease-out;
+}
+
+.cell.sunk {
+    background: #8B0000;
+    animation: sink 1s ease-out;
+}
+
+.cell.preview {
+    background: rgba(46, 204, 113, 0.6);
+    border: 2px solid #2ECC71;
+}
+
+.cell.invalid-preview {
+    background: rgba(231, 76, 60, 0.6);
+    border: 2px solid #E74C3C;
+}
+
+/* Game Boards Layout */
+.game-boards {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-top: 30px;
+}
+
+.board-container {
+    display: flex;
+    gap: 50px;
+}
+
+.board {
+    text-align: center;
+}
+
+.board h2 {
+    color: #2ECC71;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.computer-board .cell:hover {
+    background: rgba(231, 76, 60, 0.3);
+    cursor: crosshair;
+}
+
+.computer-board .cell.hit:hover,
+.computer-board .cell.miss:hover {
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Animations */
+@keyframes explosion {
+    0% { transform: scale(1); background: #E74C3C; }
+    50% { transform: scale(1.3); background: #FF6B6B; box-shadow: 0 0 20px #E74C3C; }
+    100% { transform: scale(1); background: #E74C3C; }
+}
+
+@keyframes splash {
+    0% { transform: scale(1); background: #3498DB; }
+    50% { transform: scale(1.2); background: #5DADE2; }
+    100% { transform: scale(1); background: #3498DB; }
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-10px); }
+    60% { transform: translateY(-5px); }
+}
+
+@keyframes ripple {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes sink {
+    0% { transform: scale(1) rotateZ(0deg); }
+    50% { transform: scale(1.1) rotateZ(5deg); }
+    100% { transform: scale(0.9) rotateZ(0deg); opacity: 0.7; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Game Over Styles */
+.game-over {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.game-over-content {
+    background: linear-gradient(135deg, #0A2A43, #1B4F72);
+    padding: 50px;
+    border-radius: 20px;
+    border: 3px solid #2ECC71;
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+    box-shadow: 0 0 30px rgba(46, 204, 113, 0.5);
+}
+
+.game-over-content h2 {
+    font-size: 3rem;
+    color: #2ECC71;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.game-over-content p {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    color: #ffffff;
+}
+
+#restart-btn {
+    padding: 15px 30px;
+    background: #2ECC71;
+    color: #0A2A43;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#restart-btn:hover {
+    background: #27AE60;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Mobile-first responsive design improvements */
+
+/* Touch-friendly controls */
+.cell {
+    min-height: 35px;
+    min-width: 35px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile ship selection */
+.ship-item {
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    min-height: 50px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile buttons */
+.setup-buttons button {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    min-height: 50px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#restart-btn {
+    padding: 18px 35px;
+    font-size: 1.3rem;
+    min-height: 55px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile grid improvements */
+@media (max-width: 768px) {
+    .game-container {
+        padding: 10px;
+    }
+    
+    .game-header h1 {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .game-status {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 20px;
+    }
+    
+    .ships-remaining {
+        gap: 30px;
+        justify-content: center;
+    }
+    
+    .game-setup {
+        flex-direction: column;
+        gap: 25px;
+    }
+    
+    .setup-controls {
+        padding: 20px;
+    }
+    
+    .setup-controls h2 {
+        font-size: 1.5rem;
+    }
+    
+    .ship-item {
+        padding: 15px;
+        font-size: 1rem;
+    }
+    
+    .setup-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .setup-buttons button {
+        width: 100%;
+        padding: 18px;
+        font-size: 1.2rem;
+    }
+    
+    .game-boards .board-container {
+        flex-direction: column;
+        gap: 25px;
+        align-items: center;
+    }
+    
+    .board h2 {
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+    }
+    
+    .grid {
+        width: 320px;
+        height: 320px;
+        gap: 1px;
+    }
+    
+    .cell {
+        min-height: 30px;
+        min-width: 30px;
+    }
+    
+    .turn-indicator {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .game-container {
+        padding: 5px;
+    }
+    
+    .game-header h1 {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+    }
+    
+    .game-status {
+        padding: 12px 15px;
+    }
+    
+    .turn-indicator {
+        font-size: 1rem;
+    }
+    
+    .ships-remaining {
+        gap: 20px;
+    }
+    
+    .player-ships h3, .computer-ships h3 {
+        font-size: 0.9rem;
+    }
+    
+    #player-ships-count, #computer-ships-count {
+        font-size: 1.5rem;
+    }
+    
+    .setup-controls {
+        padding: 15px;
+    }
+    
+    .setup-controls h2 {
+        font-size: 1.3rem;
+    }
+    
+    .ship-item {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    .ship-name {
+        font-size: 0.9rem;
+    }
+    
+    .ship-size {
+        font-size: 0.8rem;
+    }
+    
+    .setup-buttons button {
+        padding: 15px;
+        font-size: 1rem;
+    }
+    
+    .board h2 {
+        font-size: 1.2rem;
+    }
+    
+    .grid {
+        width: 280px;
+        height: 280px;
+        padding: 8px;
+    }
+    
+    .cell {
+        min-height: 25px;
+        min-width: 25px;
+        font-size: 0.7rem;
+    }
+    
+    .cell.ship.hit::after,
+    .cell.ship.sunk::after {
+        font-size: 1rem;
+    }
+    
+    .cell.hit::after {
+        font-size: 1rem;
+    }
+    
+    .cell.miss::after {
+        font-size: 0.9rem;
+    }
+    
+    .game-over-content {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .game-over-content h2 {
+        font-size: 2rem;
+    }
+    
+    .game-over-content p {
+        font-size: 1.2rem;
+    }
+    
+    #restart-btn {
+        padding: 15px 25px;
+        font-size: 1.1rem;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+    .grid {
+        width: 250px;
+        height: 250px;
+        padding: 5px;
+        gap: 1px;
+    }
+    
+    .cell {
+        min-height: 22px;
+        min-width: 22px;
+    }
+    
+    .game-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .setup-controls {
+        padding: 10px;
+    }
+    
+    .ship-item {
+        padding: 10px;
+        margin-bottom: 5px;
+    }
+    
+    .game-over-content {
+        padding: 20px 15px;
+    }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .game-setup {
+        flex-direction: row;
+        gap: 20px;
+    }
+    
+    .setup-controls {
+        flex: 0 0 300px;
+    }
+    
+    .setup-grid {
+        flex: 1;
+    }
+    
+    .game-boards .board-container {
+        flex-direction: row;
+        gap: 20px;
+        justify-content: center;
+    }
+    
+    .grid {
+        width: 280px;
+        height: 280px;
+    }
+    
+    .game-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .game-status {
+        flex-direction: row;
+        padding: 10px 20px;
+    }
+}
+
+/* Touch improvements */
+@media (hover: none) and (pointer: coarse) {
+    .cell:hover {
+        background: #1B4F72;
+        transform: none;
+    }
+    
+    .cell:active {
+        background: rgba(46, 204, 113, 0.3);
+        transform: scale(0.95);
+    }
+    
+    .computer-board .cell:active {
+        background: rgba(231, 76, 60, 0.3);
+    }
+    
+    .ship-item:hover {
+        background: rgba(46, 204, 113, 0.1);
+        border-color: transparent;
+    }
+    
+    .ship-item:active {
+        background: rgba(46, 204, 113, 0.3);
+        border-color: #2ECC71;
+    }
+    
+    .setup-buttons button:hover:not(:disabled) {
+        background: #2ECC71;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .setup-buttons button:active:not(:disabled) {
+        background: #27AE60;
+        transform: scale(0.95);
+    }
+    
+    #restart-btn:hover {
+        background: #2ECC71;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    #restart-btn:active {
+        background: #27AE60;
+        transform: scale(0.95);
+    }
+}
+
+/* Enhanced Ship Styling */
+
+/* Merged ship styling - when ships are connected */
+.ship-container {
+    position: relative;
+    display: contents;
+}
+
+/* Connected ship borders */
+.cell.ship.connected-left {
+    border-left: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.cell.ship.connected-right {
+    border-right: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.cell.ship.connected-top {
+    border-top: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.cell.ship.connected-bottom {
+    border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+/* Ship type specific styling */
+.cell.ship.carrier {
+    background: linear-gradient(135deg, #2C3E50 0%, #34495E 50%, #5D6D7E 100%);
+    border-color: #5D6D7E;
+}
+
+.cell.ship.battleship {
+    background: linear-gradient(135deg, #1B4F72 0%, #2E86AB 50%, #A23B72 100%);
+    border-color: #2E86AB;
+}
+
+.cell.ship.cruiser {
+    background: linear-gradient(135deg, #148F77 0%, #16A085 50%, #48C9B0 100%);
+    border-color: #16A085;
+}
+
+.cell.ship.submarine {
+    background: linear-gradient(135deg, #7D3C98 0%, #8E44AD 50%, #BB8FCE 100%);
+    border-color: #8E44AD;
+}
+
+.cell.ship.destroyer {
+    background: linear-gradient(135deg, #B7950B 0%, #F1C40F 50%, #F7DC6F 100%);
+    border-color: #F1C40F;
+}
+
+/* Enhanced hit states for different ship parts */
+.cell.ship.hit {
+    background: radial-gradient(circle, #E74C3C 0%, #C0392B 50%, #922B21 100%) !important;
+    animation: explosion 0.6s ease-out;
+    border-color: #E74C3C !important;
+}
+
+.cell.ship.bow.hit {
+    background: radial-gradient(circle, #FF6B6B 0%, #E74C3C 50%, #C0392B 100%) !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.cell.ship.stern.hit {
+    background: radial-gradient(circle, #FF4757 0%, #E74C3C 50%, #C0392B 100%) !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.cell.ship.hull.hit {
+    background: radial-gradient(circle, #FF3838 0%, #E74C3C 50%, #C0392B 100%) !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.8), inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Enhanced sunk ship styling */
+.cell.ship.sunk {
+    background: linear-gradient(135deg, #2C2C2C 0%, #1C1C1C 50%, #0C0C0C 100%) !important;
+    border-color: #555 !important;
+    animation: sink 1s ease-out;
+    opacity: 0.7;
+}
+
+.cell.ship.sunk::before {
+    background: linear-gradient(45deg, 
+        rgba(255, 0, 0, 0.2) 0%, 
+        rgba(139, 0, 0, 0.3) 50%, 
+        rgba(0, 0, 0, 0.4) 100%) !important;
+}
+
+/* Enhanced damage effects */
+.cell.ship.hit::after {
+    content: '💥' !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    animation: bounce 0.5s ease-out;
+    z-index: 10;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+}
+
+.cell.ship.sunk::after {
+    content: '☠️' !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    z-index: 10;
+    animation: fadeIn 0.5s ease-out;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+}
+/* Additional ship enhancements */
+
+/* Ship shadows and depth */
+.cell.ship {
+    box-shadow: 
+        inset 2px 2px 4px rgba(255, 255, 255, 0.1),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Ship deck lines */
+.cell.ship.hull::before {
+    content: '';
+    position: absolute;
+    top: 30%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1px;
+}
+
+.cell.ship.hull::after {
+    top: 60%;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Bow details */
+.cell.ship.bow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(255, 255, 255, 0.2);
+}
+
+/* Stern details */
+.cell.ship.stern::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+}
+
+/* Smooth transitions for ship states */
+.cell.ship {
+    transition: all 0.3s ease;
+}
+
+.cell.ship:hover {
+    transform: scale(1.02);
+    box-shadow: 
+        inset 2px 2px 4px rgba(255, 255, 255, 0.2),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.4),
+        0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Prevent hover effects on hit/sunk ships */
+.cell.ship.hit:hover,
+.cell.ship.sunk:hover {
+    transform: none;
+}
+
+/* Enhanced explosion animation */
+@keyframes explosion {
+    0% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 rgba(231, 76, 60, 0.8);
+    }
+    25% { 
+        transform: scale(1.1); 
+        box-shadow: 0 0 10px rgba(231, 76, 60, 0.8);
+    }
+    50% { 
+        transform: scale(1.3); 
+        box-shadow: 0 0 20px rgba(255, 107, 107, 1);
+    }
+    75% { 
+        transform: scale(1.1); 
+        box-shadow: 0 0 15px rgba(231, 76, 60, 0.6);
+    }
+    100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 5px rgba(231, 76, 60, 0.4);
+    }
+}
+
+/* Enhanced sink animation */
+@keyframes sink {
+    0% { 
+        transform: scale(1) rotateZ(0deg); 
+        opacity: 1;
+    }
+    25% { 
+        transform: scale(1.05) rotateZ(2deg); 
+        opacity: 0.9;
+    }
+    50% { 
+        transform: scale(1.1) rotateZ(-3deg); 
+        opacity: 0.8;
+    }
+    75% { 
+        transform: scale(0.95) rotateZ(1deg); 
+        opacity: 0.7;
+    }
+    100% { 
+        transform: scale(0.9) rotateZ(0deg); 
+        opacity: 0.6;
+    }
+}
+/* Generic hit styling for enemy ships (no design reveal) */
+.cell.hit:not(.bow):not(.hull):not(.stern) {
+    background: radial-gradient(circle, #E74C3C 0%, #C0392B 50%, #922B21 100%) !important;
+    border-color: #E74C3C !important;
+    box-shadow: 0 0 15px rgba(231, 76, 60, 0.8);
+}
+
+/* Only show ship design details when sunk */
+.cell.sunk.bow,
+.cell.sunk.hull,
+.cell.sunk.stern {
+    /* Ship part styling will be applied by JavaScript when sunk */
+}
+
+/* Enhanced sunk ship reveal animation */
+@keyframes revealShip {
+    0% { 
+        opacity: 0.7;
+        transform: scale(0.9);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    100% { 
+        opacity: 0.7;
+        transform: scale(1);
+    }
+}
+
+.cell.sunk.bow,
+.cell.sunk.hull,
+.cell.sunk.stern {
+    animation: revealShip 1s ease-out, sink 1s ease-out;
+}
+
+/* Mobile-specific enhancements */
+
+/* Prevent text selection on mobile */
+.game-container {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
+/* Improve scrolling on mobile */
+body {
+    -webkit-overflow-scrolling: touch;
+    overflow-x: hidden;
+}
+
+/* Mobile loading indicator */
+.loading {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #2ECC71;
+    font-size: 1.2rem;
+    z-index: 1000;
+}
+
+/* Mobile notification for landscape mode */
+.landscape-notice {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(10, 42, 67, 0.95);
+    color: #2ECC71;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.9rem;
+    z-index: 1001;
+    border-bottom: 2px solid #2ECC71;
+}
+
+@media (max-width: 768px) and (orientation: landscape) and (max-height: 500px) {
+    .landscape-notice {
+        display: block;
+    }
+}
+
+/* Improve button feedback on mobile */
+@media (hover: none) {
+    .setup-buttons button:active:not(:disabled) {
+        background: #27AE60;
+        transform: scale(0.95);
+        transition: all 0.1s ease;
+    }
+    
+    .ship-item:active {
+        background: rgba(46, 204, 113, 0.4);
+        transform: scale(0.98);
+        transition: all 0.1s ease;
+    }
+    
+    .cell:active {
+        transform: scale(0.9);
+        transition: all 0.1s ease;
+    }
+}
+
+/* Mobile game over modal improvements */
+@media (max-width: 480px) {
+    .game-over {
+        padding: 20px;
+    }
+    
+    .game-over-content {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+}
+
+/* Accessibility improvements for mobile */
+@media (prefers-reduced-motion: reduce) {
+    .cell,
+    .ship-item,
+    .setup-buttons button {
+        transition: none;
+    }
+    
+    .cell:active,
+    .ship-item:active,
+    .setup-buttons button:active {
+        transform: none;
+    }
+    
+    @keyframes explosion,
+    @keyframes splash,
+    @keyframes sink,
+    @keyframes revealShip {
+        animation-duration: 0.1s;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .cell {
+        border-width: 2px;
+    }
+    
+    .ship-item {
+        border-width: 2px;
+    }
+    
+    .setup-buttons button {
+        border: 2px solid #2ECC71;
+    }
+}
+
+/* Dark mode support for mobile browsers */
+@media (prefers-color-scheme: dark) {
+    /* Already using dark theme, but ensure consistency */
+    body {
+        background: linear-gradient(135deg, #0A2A43 0%, #1B4F72 50%, #2ECC71 100%);
+    }
+}
