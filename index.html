@@ -30,6 +30,15 @@
         <button id="backBtn" style="display:none;">🔙 Назад</button>
     </div>
 
+    <!-- Контейнер для Морского боя -->
+    <div id="battleship-container" style="display:none; position:fixed; inset:0; background:#fff; z-index:999;">
+        <div style="padding: 8px; background: #1F4E79; display: flex; align-items: center; justify-content: space-between;">
+            <span style="color: white; font-weight: 600; font-size: 15px;">⚓ Морской бой</span>
+            <button id="closeBattleshipBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">✖ Закрыть</button>
+        </div>
+        <iframe id="battleship-frame" src="" style="width: 100%; height: calc(100vh - 48px); border: none; display: block;"></iframe>
+    </div>
+
     <div id="confirmModal" class="modal" style="display:none;">
         <div class="modal-content">
             <h3>⚠️ Удалить событие?</h3>

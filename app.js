@@ -297,11 +297,22 @@ document.addEventListener('DOMContentLoaded', function() {
             <h2>🎮 Игры</h2>
             <button class="action-btn" id="tttBtn">❌⭕ Крестики-нолики</button>
             <button class="action-btn" id="c4Btn">🔴 4 в ряд</button>
+            <button class="action-btn" id="battleshipBtn">⚓ Морской бой</button>
             <button class="action-btn secondary" id="leaderboardBtn">🏆 Рейтинг</button>
         `);
         document.getElementById('tttBtn').addEventListener('click', () => { currentView = 'game_ttt'; showTicTacToe(); });
         document.getElementById('c4Btn').addEventListener('click', () => { currentView = 'game_c4'; showConnectFour(); });
+        document.getElementById('battleshipBtn').addEventListener('click', openBattleship);
         document.getElementById('leaderboardBtn').addEventListener('click', () => { currentView = 'game_leaderboard'; showLeaderboard(); });
+    }
+
+    function openBattleship() {
+        const container = document.getElementById('battleship-container');
+        const frame = document.getElementById('battleship-frame');
+        if (!frame.src || frame.src === 'about:blank' || frame.src.endsWith('/')) {
+            frame.src = 'battleship/battleship.html';
+        }
+        container.style.display = 'block';
     }
 
     // ===== КРЕСТИКИ-НОЛИКИ =====
@@ -574,7 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
             else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
         }
 
-        // Кнопки выбора столбца
         let controlsHtml = '<div class="c4-controls">';
         for (let col = 0; col < 7; col++) {
             let canDrop = false;
@@ -587,7 +597,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         controlsHtml += '</div>';
 
-        // Определяем новые клетки для анимации падения
         const oldBoard = lastC4Board || '';
         const droppingCells = [];
         if (oldBoard.length === board.length) {
@@ -871,6 +880,11 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'chart') { currentView = 'rates'; showRates(); }
         else if (currentView === 'game_ttt' || currentView === 'game_c4' || currentView === 'game_leaderboard') { currentView = 'games'; showGamesMenu(); }
         else { showMainMenu(); }
+    });
+
+    // Закрытие Морского боя
+    document.getElementById('closeBattleshipBtn').addEventListener('click', function() {
+        document.getElementById('battleship-container').style.display = 'none';
     });
 
     function setupNavigation() {
