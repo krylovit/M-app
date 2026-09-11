@@ -42,10 +42,19 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentRatePair = null;
     const imageCache = {};
 
+    // ===== СОСТОЯНИЕ ИГР =====
+    let currentGame = null;         // Данные текущей игры
+    let gameRefreshTimer = null;    // Таймер обновления игры
+    let selectedCell = null;
+
     // ===== УТИЛИТЫ =====
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.id;
         return 0;
+    }
+    function getUsername() {
+        if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.username || '';
+        return '';
     }
     function escapeHtml(s) {
         if (!s) return '';
@@ -55,8 +64,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function setBackBtnVisible(v) { document.getElementById('backBtn').style.display = v ? 'block' : 'none'; }
     function stopLottie() { if (lottieAnimation) { lottieAnimation.destroy(); lottieAnimation = null; } }
     function destroyChart() { if (currentChart) { currentChart.destroy(); currentChart = null; } }
+    function stopGameTimer() { if (gameRefreshTimer) { clearInterval(gameRefreshTimer); gameRefreshTimer = null; } }
 
-    // Получить текущий курс из rates (всегда актуальный)
     function getCurrentRate(fromCur, toCur) {
         if (!rates) return null;
         if (fromCur === 'USD' && toCur === 'RUB') return parseFloat(rates.usd_rub);
@@ -113,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== ВИДЫ =====
     function renderCurrentView() {
         if (currentView !== 'mouse' && currentView !== 'weather') stopLottie();
+        if (currentView !== 'game_ttt') stopGameTimer();
         if (currentView === 'rates') showRates();
         else if (currentView === 'weather') showWeather();
         else if (currentView === 'mouse') showMouseDay();
@@ -120,11 +130,14 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'public_events') showPublicEvents();
         else if (currentView === 'edit') showEditScreen();
         else if (currentView === 'chart') showChartScreen();
+        else if (currentView === 'games') showGamesMenu();
+        else if (currentView === 'game_ttt') showTicTacToe();
+        else if (currentView === 'game_leaderboard') showLeaderboard();
         else showMainMenu();
     }
 
     function showMainMenu() {
-        currentView = 'main'; stopLottie(); destroyChart(); setBackBtnVisible(false);
+        currentView = 'main'; stopLottie(); destroyChart(); stopGameTimer(); setBackBtnVisible(false);
         render(`<p>👋 Выбери раздел выше</p>`);
     }
 
@@ -165,7 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const [fromCur, toCur] = currentRatePair.split('-');
         const pairLabel = `${fromCur} → ${toCur}`;
 
-        // Текущая цена из rates (всегда актуальная)
         const currentPrice = getCurrentRate(fromCur, toCur);
         const currentPriceText = currentPrice !== null ? currentPrice.toFixed(currentPrice < 1 ? 4 : 2) : '—';
 
@@ -175,9 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span style="font-size: 28px; font-weight: 700;">${currentPriceText}</span>
                 <span style="font-size: 14px; color: gray; margin-left: 4px;">${toCur}</span>
             </div>
-            <div style="text-align:center; font-size: 12px; color: gray; margin-bottom: 16px;">
-                Текущий курс
-            </div>
+            <div style="text-align:center; font-size: 12px; color: gray; margin-bottom: 16px;">Текущий курс</div>
             <div id="chartChange" style="text-align:center; font-size: 15px; font-weight: 600; margin-bottom: 16px;">—</div>
             <div class="period-buttons">
                 <button class="period-btn active" data-days="7">7 дней</button>
@@ -227,19 +237,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const values = d.values;
-            // Текущая цена — из rates, а не из истории
             const currentPrice = getCurrentRate(fromCur, toCur);
             const firstValue = values[0];
             const minValue = Math.min(...values);
             const maxValue = Math.max(...values);
 
-            // Изменение считаем от первого значения периода до текущей цены
             const diff = currentPrice - firstValue;
             const diffPercent = (diff / firstValue) * 100;
 
             const decimals = currentPrice < 1 ? 4 : 2;
 
-            // Показываем изменение
             const changeEl = document.getElementById('chartChange');
             if (diff >= 0) {
                 changeEl.style.color = '#27ae60';
@@ -296,14 +303,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { maxTicksLimit: 6, font: { size: 11 } }
-                        },
-                        y: {
-                            grid: { color: 'rgba(0,0,0,0.05)' },
-                            ticks: { font: { size: 11 } }
-                        }
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 11 } } },
+                        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 } } }
                     },
                     interaction: { intersect: false, mode: 'index' }
                 }
@@ -355,6 +356,358 @@ document.addEventListener('DOMContentLoaded', function() {
         `);
         const c = document.getElementById('mouse-animation-container');
         if (c && window.lottie) { stopLottie(); lottieAnimation = lottie.loadAnimation({ container: c, renderer: 'svg', loop: true, autoplay: true, path: anim }); }
+    }
+
+    // ===== ИГРЫ: МЕНЮ =====
+    function showGamesMenu() {
+        currentView = 'games'; setBackBtnVisible(true); stopGameTimer();
+        render(`
+            <h2>🎮 Игры</h2>
+            <button class="action-btn" id="tttBtn">❌⭕ Крестики-нолики</button>
+            <button class="action-btn secondary" id="leaderboardBtn">🏆 Рейтинг</button>
+            <p style="font-size:12px; color:gray; margin-top:16px; text-align:center;">
+                Играй с друзьями или с ботом
+            </p>
+        `);
+        document.getElementById('tttBtn').addEventListener('click', () => {
+            currentView = 'game_ttt';
+            showTicTacToe();
+        });
+        document.getElementById('leaderboardBtn').addEventListener('click', () => {
+            currentView = 'game_leaderboard';
+            showLeaderboard();
+        });
+    }
+
+    // ===== КРЕСТИКИ-НОЛИКИ =====
+    async function showTicTacToe() {
+        currentView = 'game_ttt';
+        setBackBtnVisible(true);
+
+        const user_id = getUserId();
+        const username = getUsername();
+
+        // Загружаем активную игру
+        try {
+            const r = await fetch(`${API_URL}/api/game/my_active?user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+
+            if (d.success && d.games && d.games.length > 0) {
+                // Есть активная игра — загружаем её
+                const game_id = d.games[0].id;
+                await loadGameState(game_id);
+            } else {
+                // Нет активной — показываем меню создания
+                renderTttLobby();
+            }
+        } catch (e) {
+            console.error(e);
+            renderTttLobby();
+        }
+    }
+
+    function renderTttLobby() {
+        render(`
+            <h2>❌⭕ Крестики-нолики</h2>
+            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">
+                Создай игру и пригласи друга, или сыграй с ботом
+            </p>
+            <button class="action-btn" id="createGameBtn">➕ Создать игру</button>
+            <button class="action-btn secondary" id="botGameBtn">🤖 Играть с ботом</button>
+            <p style="font-size:12px; color:gray; margin-top:20px; text-align:center;">
+                Ты будешь играть за ❌
+            </p>
+        `);
+
+        document.getElementById('createGameBtn').addEventListener('click', createGame);
+        document.getElementById('botGameBtn').addEventListener('click', startBotGame);
+    }
+
+    async function createGame() {
+        try {
+            const r = await fetch(`${API_URL}/api/game/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ user_id: getUserId() })
+            });
+            const d = await r.json();
+            if (d.success) {
+                await loadGameState(d.game_id);
+            } else {
+                alert('Ошибка: ' + (d.error || 'не удалось создать игру'));
+            }
+        } catch (e) { alert('Ошибка сети'); }
+    }
+
+    async function startBotGame() {
+        alert('🤖 Игра с ботом — в разработке. Пока играй с друзьями!');
+    }
+
+    async function loadGameState(game_id) {
+        try {
+            const user_id = getUserId();
+            const r = await fetch(`${API_URL}/api/game/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+            const d = await r.json();
+
+            if (!d.success) {
+                alert('Игра не найдена');
+                renderTttLobby();
+                return;
+            }
+
+            currentGame = d.game;
+            renderGameBoard();
+            startGameAutoRefresh(game_id);
+        } catch (e) {
+            console.error(e);
+            renderTttLobby();
+        }
+    }
+
+    function renderGameBoard() {
+        const g = currentGame;
+        const board = g.board.split('');
+        const mySymbol = g.my_symbol;
+
+        // Заголовок статуса
+        let statusText = '';
+        let statusColor = 'gray';
+
+        if (g.status === 'waiting') {
+            statusText = '⏳ Ждём соперника...';
+            statusColor = '#f39c12';
+        } else if (g.status === 'active') {
+            if (g.is_my_turn) {
+                statusText = '🎯 Твой ход';
+                statusColor = '#27ae60';
+            } else {
+                statusText = '⏳ Ход соперника';
+                statusColor = '#e67e22';
+            }
+        } else if (g.status === 'finished') {
+            if (g.winner_id === getUserId()) {
+                statusText = '🏆 Ты победил!';
+                statusColor = '#27ae60';
+            } else if (g.winner_id === null) {
+                statusText = '🤝 Ничья';
+                statusColor = '#3498db';
+            } else {
+                statusText = '😔 Ты проиграл';
+                statusColor = '#e74c3c';
+            }
+        }
+
+        // Доска
+        let boardHtml = '<div class="ttt-board">';
+        for (let i = 0; i < 9; i++) {
+            const cell = board[i];
+            const cellClass = cell === 'X' ? 'ttt-cell x' : cell === 'O' ? 'ttt-cell o' : 'ttt-cell';
+            const canClick = g.status === 'active' && g.is_my_turn && cell === '-';
+            boardHtml += `<div class="${cellClass}" data-pos="${i}" ${canClick ? 'data-clickable="1"' : ''}>${cell === '-' ? '' : cell}</div>`;
+        }
+        boardHtml += '</div>';
+
+        // Информация о сопернике
+        let opponentInfo = '';
+        if (g.opponent_username) {
+            opponentInfo = `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: @${escapeHtml(g.opponent_username)}</p>`;
+        }
+
+        // Кнопки
+        let buttonsHtml = '';
+        if (g.status === 'waiting') {
+            buttonsHtml = `
+                <button class="action-btn" id="inviteBtn">📨 Пригласить друга</button>
+                <button class="action-btn secondary" id="cancelGameBtn">❌ Отменить игру</button>
+            `;
+        } else if (g.status === 'finished') {
+            buttonsHtml = `
+                <button class="action-btn" id="newGameBtn">🔄 Новая игра</button>
+                <button class="action-btn secondary" id="backToGamesBtn">🔙 К играм</button>
+            `;
+        } else {
+            buttonsHtml = `<button class="action-btn secondary" id="leaveGameBtn">🚪 Выйти</button>`;
+        }
+
+        render(`
+            <h2>❌⭕ Игра #${g.id}</h2>
+            <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:16px;">
+                ${statusText}
+            </p>
+            ${boardHtml}
+            ${opponentInfo}
+            <div style="margin-top:20px;">
+                ${buttonsHtml}
+            </div>
+        `);
+
+        // Навешиваем обработчики на клетки
+        document.querySelectorAll('.ttt-cell[data-clickable="1"]').forEach(cell => {
+            cell.addEventListener('click', function() {
+                const pos = parseInt(this.getAttribute('data-pos'));
+                makeMove(pos);
+            });
+        });
+
+        // Кнопки
+        const inviteBtn = document.getElementById('inviteBtn');
+        if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id));
+
+        const cancelBtn = document.getElementById('cancelGameBtn');
+        if (cancelBtn) cancelBtn.addEventListener('click', cancelCurrentGame);
+
+        const newGameBtn = document.getElementById('newGameBtn');
+        if (newGameBtn) newGameBtn.addEventListener('click', () => {
+            stopGameTimer();
+            currentGame = null;
+            renderTttLobby();
+        });
+
+        const backBtn = document.getElementById('backToGamesBtn');
+        if (backBtn) backBtn.addEventListener('click', () => {
+            stopGameTimer();
+            showGamesMenu();
+        });
+
+        const leaveBtn = document.getElementById('leaveGameBtn');
+        if (leaveBtn) leaveBtn.addEventListener('click', () => {
+            stopGameTimer();
+            showGamesMenu();
+        });
+    }
+
+    async function makeMove(position) {
+        const g = currentGame;
+        if (!g || g.status !== 'active' || !g.is_my_turn) return;
+
+        try {
+            const r = await fetch(`${API_URL}/api/game/move`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({
+                    game_id: g.id,
+                    user_id: getUserId(),
+                    position: position
+                })
+            });
+            const d = await r.json();
+            if (d.success) {
+                await loadGameState(g.id);
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function startGameAutoRefresh(game_id) {
+        stopGameTimer();
+        gameRefreshTimer = setInterval(async () => {
+            if (currentView !== 'game_ttt') {
+                stopGameTimer();
+                return;
+            }
+            try {
+                const user_id = getUserId();
+                const r = await fetch(`${API_URL}/api/game/state?game_id=${game_id}&user_id=${user_id}`, { headers: HEADERS });
+                const d = await r.json();
+                if (d.success) {
+                    currentGame = d.game;
+                    renderGameBoard();
+                }
+            } catch (e) {}
+        }, 3000);  // каждые 3 секунды
+    }
+
+    function openInviteDialog(game_id) {
+        const username = prompt('Введи @username друга (без @):');
+        if (!username) return;
+        sendInvite(game_id, username.replace('@', ''));
+    }
+
+    async function sendInvite(game_id, username) {
+        try {
+            const r = await fetch(`${API_URL}/api/game/invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ game_id, username })
+            });
+            const d = await r.json();
+
+            if (!d.success) {
+                alert('❌ Не удалось найти игрока: ' + (d.error || 'unknown'));
+                return;
+            }
+
+            // Просим бота отправить приглашение
+            const inviteData = {
+                action: 'invite',
+                game_id: game_id,
+                invited_user_id: d.invited_user_id,
+                invited_username: d.invited_username,
+                from_username: getUsername()
+            };
+
+            if (tg) {
+                tg.sendData(JSON.stringify(inviteData));
+            }
+
+            alert(`✅ Приглашение отправлено @${d.invited_username}!\nДруг получит уведомление в боте.`);
+        } catch (e) {
+            alert('Ошибка при отправке приглашения');
+        }
+    }
+
+    async function cancelCurrentGame() {
+        if (!confirm('Отменить игру?')) return;
+        stopGameTimer();
+        currentGame = null;
+        renderTttLobby();
+    }
+
+    // ===== РЕЙТИНГ =====
+    async function showLeaderboard() {
+        currentView = 'game_leaderboard';
+        setBackBtnVisible(true);
+        stopGameTimer();
+
+        render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:gray;">Загрузка...</p>`);
+
+        try {
+            const r = await fetch(`${API_URL}/api/game/leaderboard`, { headers: HEADERS });
+            const d = await r.json();
+
+            if (!d.success || !d.leaderboard.length) {
+                render(`
+                    <h2>🏆 Рейтинг</h2>
+                    <p style="text-align:center; color:gray; margin-top:20px;">Пока никого нет.<br>Сыграй первым!</p>
+                    <button class="action-btn" id="playNowBtn">🎮 Играть</button>
+                `);
+                document.getElementById('playNowBtn').addEventListener('click', () => {
+                    currentView = 'game_ttt';
+                    showTicTacToe();
+                });
+                return;
+            }
+
+            let html = `<h2>🏆 Рейтинг</h2><div style="margin-top:12px;">`;
+            d.leaderboard.forEach((p, i) => {
+                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                const isMe = p.user_id === getUserId();
+                const bg = isMe ? 'background: rgba(51, 144, 236, 0.1);' : '';
+                html += `
+                    <div style="display:flex; align-items:center; padding:10px 12px; border-radius:10px; margin-bottom:6px; ${bg}">
+                        <div style="font-size:18px; width:36px;">${medal}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
+                            <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div>
+                        </div>
+                        <div style="font-weight:700; color:#3390ec;">${p.rating}</div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            render(html);
+        } catch (e) {
+            render(`<h2>🏆 Рейтинг</h2><p style="text-align:center; color:red;">Ошибка загрузки</p>`);
+        }
     }
 
     // ===== СОБЫТИЯ =====
@@ -509,9 +862,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) { if (!e.target.closest('.event-menu') && !e.target.closest('[data-role="toggle-menu"]')) document.querySelectorAll('.event-menu').forEach(m => m.style.display = 'none'); });
 
     document.getElementById('backBtn').addEventListener('click', function() {
-        stopLottie(); destroyChart();
+        stopLottie(); destroyChart(); stopGameTimer();
         if (currentView === 'edit') { currentView = 'events'; showEvents(); }
         else if (currentView === 'chart') { currentView = 'rates'; showRates(); }
+        else if (currentView === 'game_ttt' || currentView === 'game_leaderboard') { currentView = 'games'; showGamesMenu(); }
         else { showMainMenu(); }
     });
 
@@ -524,6 +878,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (a === 'weather') btn.addEventListener('click', showWeather);
             else if (a === 'mouse') btn.addEventListener('click', showMouseDay);
             else if (a === 'events') btn.addEventListener('click', showEvents);
+            else if (a === 'games') btn.addEventListener('click', showGamesMenu);
         });
     }
 
