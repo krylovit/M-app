@@ -56,6 +56,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function stopLottie() { if (lottieAnimation) { lottieAnimation.destroy(); lottieAnimation = null; } }
     function destroyChart() { if (currentChart) { currentChart.destroy(); currentChart = null; } }
 
+    // Получить текущий курс из rates (всегда актуальный)
+    function getCurrentRate(fromCur, toCur) {
+        if (!rates) return null;
+        if (fromCur === 'USD' && toCur === 'RUB') return parseFloat(rates.usd_rub);
+        if (fromCur === 'USD' && toCur === 'THB') return parseFloat(rates.usd_thb);
+        if (fromCur === 'THB' && toCur === 'RUB') return parseFloat(rates.thb_rub);
+        return null;
+    }
+
     async function loadPhrases() {
         try {
             const r = await fetch('phrases.json?v=' + Date.now());
@@ -156,11 +165,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const [fromCur, toCur] = currentRatePair.split('-');
         const pairLabel = `${fromCur} → ${toCur}`;
 
+        // Текущая цена из rates (всегда актуальная)
+        const currentPrice = getCurrentRate(fromCur, toCur);
+        const currentPriceText = currentPrice !== null ? currentPrice.toFixed(currentPrice < 1 ? 4 : 2) : '—';
+
         render(`
             <h2>📈 ${pairLabel}</h2>
-            <div id="chartCurrentPrice" style="text-align:center; margin: 12px 0 4px 0;">
-                <span style="font-size: 28px; font-weight: 700;" id="currentPriceValue">—</span>
+            <div style="text-align:center; margin: 12px 0 4px 0;">
+                <span style="font-size: 28px; font-weight: 700;">${currentPriceText}</span>
                 <span style="font-size: 14px; color: gray; margin-left: 4px;">${toCur}</span>
+            </div>
+            <div style="text-align:center; font-size: 12px; color: gray; margin-bottom: 16px;">
+                Текущий курс
             </div>
             <div id="chartChange" style="text-align:center; font-size: 15px; font-weight: 600; margin-bottom: 16px;">—</div>
             <div class="period-buttons">
@@ -190,7 +206,6 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadChart(fromCur, toCur, days) {
         destroyChart();
         document.getElementById('chartInfo').textContent = 'Загрузка...';
-        document.getElementById('currentPriceValue').textContent = '—';
         document.getElementById('chartChange').textContent = '—';
         document.getElementById('chartMinMax').innerHTML = '<span>Мин: —</span><span>Макс: —</span>';
 
@@ -212,24 +227,26 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const values = d.values;
+            // Текущая цена — из rates, а не из истории
+            const currentPrice = getCurrentRate(fromCur, toCur);
             const firstValue = values[0];
-            const lastValue = values[values.length - 1];
             const minValue = Math.min(...values);
             const maxValue = Math.max(...values);
-            const diff = lastValue - firstValue;
+
+            // Изменение считаем от первого значения периода до текущей цены
+            const diff = currentPrice - firstValue;
             const diffPercent = (diff / firstValue) * 100;
 
-            const decimals = lastValue < 1 ? 4 : 2;
+            const decimals = currentPrice < 1 ? 4 : 2;
 
-            document.getElementById('currentPriceValue').textContent = lastValue.toFixed(decimals);
-
+            // Показываем изменение
             const changeEl = document.getElementById('chartChange');
             if (diff >= 0) {
                 changeEl.style.color = '#27ae60';
-                changeEl.textContent = `▲ +${diff.toFixed(decimals)} (${diffPercent >= 0 ? '+' : ''}${diffPercent.toFixed(2)}%)`;
+                changeEl.textContent = `за ${days} дн.: ▲ +${diff.toFixed(decimals)} (${diffPercent >= 0 ? '+' : ''}${diffPercent.toFixed(2)}%)`;
             } else {
                 changeEl.style.color = '#e74c3c';
-                changeEl.textContent = `▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
+                changeEl.textContent = `за ${days} дн.: ▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
             }
 
             document.getElementById('chartMinMax').innerHTML =
