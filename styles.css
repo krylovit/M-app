@@ -423,20 +423,14 @@ nav button:active {
 
 /* ===== КРЕСТИКИ-НОЛИКИ ===== */
 
-/* Появление доски */
-@keyframes fadeInBoard {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-/* Появление X или O (плавный "выпрыг") */
+/* Появление X или O */
 @keyframes popIn {
     0% { transform: scale(0.3); opacity: 0; }
     70% { transform: scale(1.1); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* Мягкое пульсирование выигрышной линии (без мигания) */
+/* Мягкое пульсирование выигрышной линии */
 @keyframes winSoft {
     0%, 100% { 
         box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.5);
@@ -458,7 +452,7 @@ nav button:active {
     padding: 12px;
     background: rgba(51, 144, 236, 0.05);
     border-radius: 22px;
-    animation: fadeInBoard 0.35s ease;
+    /* Анимация появления доски УБРАНА */
 }
 
 .ttt-cell {
@@ -505,7 +499,6 @@ nav button:active {
     text-shadow: 0 2px 10px rgba(230, 126, 34, 0.3);
 }
 
-/* Выигрышная линия — мягкое пульсирование, без резкого мигания */
 .ttt-cell.winning {
     animation: winSoft 2s ease-in-out infinite;
 }
