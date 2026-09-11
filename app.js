@@ -553,7 +553,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const d = await r.json();
             if (!d.success) { renderC4Lobby(); return; }
             currentC4Game = d.game;
-            lastC4Board = '';
             renderC4Board();
             startC4AutoRefresh(game_id);
         } catch (e) { renderC4Lobby(); }
@@ -575,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
         }
 
-        // Кнопки выбора столбца (сверху)
+        // Кнопки выбора столбца
         let controlsHtml = '<div class="c4-controls">';
         for (let col = 0; col < 7; col++) {
             let canDrop = false;
@@ -588,13 +587,24 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         controlsHtml += '</div>';
 
-        // Поле
+        // Определяем новые клетки для анимации падения
+        const oldBoard = lastC4Board || '';
+        const droppingCells = [];
+        if (oldBoard.length === board.length) {
+            for (let i = 0; i < board.length; i++) {
+                if (oldBoard[i] !== board[i] && board[i] !== '-') {
+                    droppingCells.push(i);
+                }
+            }
+        }
+
         let boardHtml = '<div class="c4-board">';
         for (let i = 0; i < 42; i++) {
             const cell = board[i];
             let cellClass = 'c4-cell';
             if (cell === 'X') cellClass += ' x';
             else if (cell === 'O') cellClass += ' o';
+            if (droppingCells.includes(i)) cellClass += ' dropping';
             if (winningCells.includes(i)) cellClass += ' winning';
             boardHtml += `<div class="${cellClass}"></div>`;
         }
@@ -620,15 +630,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="margin-top:16px;">${buttonsHtml}</div>
         `);
 
-        if (g.board !== lastC4Board) {
-            document.querySelectorAll('.c4-cell.x, .c4-cell.o').forEach(cell => {
-                cell.style.animation = 'none';
-                setTimeout(() => { cell.style.animation = ''; }, 10);
-            });
-        }
         lastC4Board = g.board;
 
-        // Обработчики кнопок столбцов
         document.querySelectorAll('.c4-column-btn').forEach(btn => {
             if (btn.disabled) return;
             btn.addEventListener('click', function() {
@@ -658,7 +661,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ game_id: g.id, user_id: getUserId(), col: col })
             });
             const d = await r.json();
-            if (d.success) await loadC4State(g.id);
+            if (d.success) {
+                currentC4Game = { ...currentC4Game, board: d.board, status: d.status, winner_id: d.winner_id };
+                renderC4Board();
+
+                if (d.status === 'active') {
+                    setTimeout(async () => {
+                        await loadC4State(g.id);
+                    }, 500);
+                } else {
+                    await loadC4State(g.id);
+                }
+            }
         } catch (e) {}
     }
 
