@@ -507,58 +507,65 @@ nav button:active {
 .c4-controls {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 4px;
     width: 100%;
-    max-width: 340px;
+    max-width: 100%;
     margin: 0 auto 8px auto;
-    padding: 0 10px;
 }
 
 .c4-column-btn {
-    background: rgba(51, 144, 236, 0.1);
-    border: 2px solid rgba(51, 144, 236, 0.2);
-    border-radius: 12px;
-    padding: 6px;
+    background: rgba(51, 144, 236, 0.12);
+    border: 2px solid rgba(51, 144, 236, 0.3);
+    border-radius: 10px;
+    padding: 8px 4px;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     color: #3390ec;
     transition: all 0.15s;
-    aspect-ratio: 1 / 1;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 .c4-column-btn:active:not(:disabled) {
     transform: scale(0.9);
-    background: rgba(51, 144, 236, 0.25);
+    background: rgba(51, 144, 236, 0.3);
 }
 
 .c4-column-btn:disabled {
-    opacity: 0.3;
+    opacity: 0.25;
     cursor: not-allowed;
 }
 
 .c4-board {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 4px;
     width: 100%;
-    max-width: 340px;
-    margin: 0 auto 20px auto;
-    padding: 10px;
+    max-width: 100%;
+    margin: 0 auto 16px auto;
+    padding: 8px;
     background: linear-gradient(135deg, #3390ec 0%, #1a6cb5 100%);
-    border-radius: 20px;
+    border-radius: 16px;
     box-shadow: 0 6px 20px rgba(51, 144, 236, 0.3);
+    aspect-ratio: 7 / 6;
 }
 
 .c4-cell {
-    background: var(--tg-theme-bg-color, #ffffff);
+    background: #ffffff;
     border-radius: 50%;
     aspect-ratio: 1 / 1;
     cursor: default;
     transition: transform 0.15s ease, background 0.2s;
-    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.1);
     position: relative;
     overflow: hidden;
+    width: 100%;
+    height: 100%;
 }
 
 .c4-cell.x {
@@ -579,9 +586,9 @@ nav button:active {
     left: 15%;
     width: 30%;
     height: 30%;
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.5);
     border-radius: 50%;
-    filter: blur(2px);
+    filter: blur(1px);
 }
 
 .c4-cell.x,

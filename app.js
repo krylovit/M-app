@@ -578,13 +578,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Кнопки выбора столбца (сверху)
         let controlsHtml = '<div class="c4-controls">';
         for (let col = 0; col < 7; col++) {
-            // Проверяем, можно ли сюда бросить
             let canDrop = false;
             for (let row = 5; row >= 0; row--) {
                 if (board[row * 7 + col] === '-') { canDrop = true; break; }
             }
             const canClick = g.status === 'active' && g.is_my_turn && canDrop;
-            controlsHtml += `<button class="c4-column-btn" data-col="${col}" ${canClick ? '' : 'disabled'}>${canClick ? '↓' : ''}</button>`;
+            const arrow = canClick ? '⬇️' : (canDrop ? '·' : '✕');
+            controlsHtml += `<button class="c4-column-btn" data-col="${col}" ${canClick ? '' : 'disabled'}>${arrow}</button>`;
         }
         controlsHtml += '</div>';
 
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         boardHtml += '</div>';
 
-        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:8px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
 
         let buttonsHtml = '';
         if (g.status === 'waiting') {
@@ -613,11 +613,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         render(`
             <h2>🔴 4 в ряд #${g.id}</h2>
-            <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:12px;">${statusText}</p>
+            <p style="text-align:center; font-size:15px; font-weight:600; color:${statusColor}; margin-bottom:10px;">${statusText}</p>
             ${controlsHtml}
             ${boardHtml}
             ${opponentInfo}
-            <div style="margin-top:20px;">${buttonsHtml}</div>
+            <div style="margin-top:16px;">${buttonsHtml}</div>
         `);
 
         if (g.board !== lastC4Board) {
@@ -628,7 +628,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         lastC4Board = g.board;
 
-        document.querySelectorAll('.c4-column-btn:not([disabled])').forEach(btn => {
+        // Обработчики кнопок столбцов
+        document.querySelectorAll('.c4-column-btn').forEach(btn => {
+            if (btn.disabled) return;
             btn.addEventListener('click', function() {
                 const col = parseInt(this.getAttribute('data-col'));
                 makeC4Move(col);
