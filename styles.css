@@ -29,7 +29,6 @@ header h1 {
     letter-spacing: -0.5px;
 }
 
-/* ===== НАВИГАЦИЯ ===== */
 nav {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -50,16 +49,14 @@ nav button {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    transition: transform 0.15s ease, opacity 0.2s ease;
+    transition: transform 0.15s ease;
     box-shadow: 0 4px 12px rgba(51, 144, 236, 0.2);
 }
 
 nav button:active {
     transform: scale(0.97);
-    opacity: 0.9;
 }
 
-/* ===== КОНТЕНТ ===== */
 #content {
     background: var(--tg-theme-secondary-bg-color, #ffffff);
     border-radius: 24px;
@@ -73,7 +70,6 @@ nav button:active {
     margin-bottom: 16px;
     font-size: 20px;
     font-weight: 700;
-    letter-spacing: -0.3px;
 }
 
 #backBtn {
@@ -87,10 +83,9 @@ nav button:active {
     font-weight: 600;
     cursor: pointer;
     width: 100%;
-    box-shadow: 0 4px 12px rgba(51, 144, 236, 0.15);
 }
 
-/* ===== КАРТОЧКИ СОБЫТИЙ ===== */
+/* События */
 .events-list {
     display: flex;
     flex-direction: column;
@@ -101,20 +96,14 @@ nav button:active {
     background: var(--tg-theme-bg-color, #ffffff);
     border-radius: 18px;
     padding: 16px;
-    border: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
-    transition: transform 0.15s ease;
-}
-
-.event-card:active {
-    transform: scale(0.99);
 }
 
 .event-card.hidden-event {
     opacity: 0.5;
-    box-shadow: none;
     background: transparent;
     border: 1px dashed rgba(0,0,0,0.1);
+    box-shadow: none;
 }
 
 .event-card-header {
@@ -138,7 +127,6 @@ nav button:active {
     font-weight: 600;
     font-size: 16px;
     word-break: break-word;
-    letter-spacing: -0.2px;
 }
 
 .event-card-date {
@@ -151,8 +139,6 @@ nav button:active {
     font-size: 13px;
     color: var(--tg-theme-hint-color, #888);
     margin-top: 6px;
-    line-height: 1.5;
-    word-break: break-word;
 }
 
 .event-menu-btn {
@@ -164,11 +150,6 @@ nav button:active {
     cursor: pointer;
     padding: 6px 10px;
     border-radius: 10px;
-    flex-shrink: 0;
-}
-
-.event-menu-btn:active {
-    background: rgba(0,0,0,0.05);
 }
 
 .event-menu {
@@ -189,18 +170,13 @@ nav button:active {
     font-size: 14px;
     cursor: pointer;
     color: var(--tg-theme-text-color, #000);
-    transition: background 0.15s;
-}
-
-.event-menu button:active {
-    background: rgba(0,0,0,0.06);
 }
 
 .event-menu button.danger {
     color: #e74c3c;
 }
 
-/* ===== КНОПКИ ДЕЙСТВИЙ ===== */
+/* Кнопки */
 .action-btn {
     display: block;
     width: 100%;
@@ -227,7 +203,7 @@ nav button:active {
     box-shadow: none;
 }
 
-/* ===== ФОРМА ===== */
+/* Форма */
 .form-group {
     margin-bottom: 20px;
 }
@@ -239,7 +215,6 @@ nav button:active {
     margin-bottom: 8px;
     color: var(--tg-theme-hint-color, #666);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .form-group input,
@@ -252,13 +227,6 @@ nav button:active {
     font-family: inherit;
     background: var(--tg-theme-bg-color, #ffffff);
     color: var(--tg-theme-text-color, #000);
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--tg-theme-button-color, #3390ec);
 }
 
 .form-group textarea {
@@ -286,12 +254,10 @@ nav button:active {
     font-size: 14px;
     cursor: pointer;
     font-weight: 500;
-    color: var(--tg-theme-text-color, #000);
     text-transform: none;
-    letter-spacing: normal;
 }
 
-/* ===== ВКЛАДКИ ===== */
+/* Вкладки */
 .tabs {
     display: flex;
     gap: 10px;
@@ -301,14 +267,13 @@ nav button:active {
 .tab {
     flex: 1;
     padding: 12px 16px;
-    border: none;
+    border: 2px solid rgba(0,0,0,0.06);
     border-radius: 14px;
     background: transparent;
     color: var(--tg-theme-hint-color, #666);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    border: 2px solid rgba(0,0,0,0.06);
     transition: all 0.2s;
 }
 
@@ -316,10 +281,9 @@ nav button:active {
     background: var(--tg-theme-button-color, #3390ec);
     color: var(--tg-theme-button-text-color, #ffffff);
     border-color: var(--tg-theme-button-color, #3390ec);
-    box-shadow: 0 4px 12px rgba(51, 144, 236, 0.2);
 }
 
-/* ===== ФОТО ===== */
+/* Фото */
 .event-thumb {
     width: 56px;
     height: 56px;
@@ -350,7 +314,7 @@ nav button:active {
     margin-bottom: 16px;
 }
 
-/* ===== ГРАФИК КУРСОВ ===== */
+/* График */
 .rate-item {
     display: flex;
     justify-content: space-between;
@@ -358,15 +322,10 @@ nav button:active {
     padding: 16px 0;
     border-bottom: 1px solid rgba(0,0,0,0.04);
     cursor: pointer;
-    transition: background 0.15s;
 }
 
 .rate-item:last-child {
     border-bottom: none;
-}
-
-.rate-item:active {
-    background: rgba(0,0,0,0.02);
 }
 
 .rate-label {
@@ -402,7 +361,6 @@ nav button:active {
     font-weight: 600;
     cursor: pointer;
     color: var(--tg-theme-text-color, #000);
-    transition: all 0.2s;
 }
 
 .period-btn.active {
@@ -411,7 +369,7 @@ nav button:active {
     border-color: var(--tg-theme-button-color, #3390ec);
 }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
+/* Модальное окно */
 .modal {
     position: fixed;
     inset: 0;
@@ -426,7 +384,6 @@ nav button:active {
 
 .modal-content {
     background: var(--tg-theme-bg-color, #ffffff);
-    color: var(--tg-theme-text-color, #000);
     border-radius: 24px;
     padding: 24px;
     max-width: 340px;
@@ -444,7 +401,6 @@ nav button:active {
     font-size: 14px;
     color: var(--tg-theme-hint-color, #666);
     margin-bottom: 20px;
-    word-break: break-word;
 }
 
 .modal-buttons {
@@ -470,10 +426,25 @@ nav button:active {
 .btn-danger {
     background: #e74c3c;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
 }
 
 /* ===== КРЕСТИКИ-НОЛИКИ ===== */
+@keyframes fadeInBoard {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes winPulse {
+    0%, 100% { background: rgba(39, 174, 96, 0.25); box-shadow: 0 0 0 rgba(39, 174, 96, 0); }
+    50% { background: rgba(39, 174, 96, 0.5); box-shadow: 0 0 20px rgba(39, 174, 96, 0.6); }
+}
+
 .ttt-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -481,14 +452,15 @@ nav button:active {
     width: 100%;
     max-width: 300px;
     margin: 20px auto;
-    padding: 10px;
-    background: rgba(51, 144, 236, 0.04);
-    border-radius: 20px;
+    padding: 12px;
+    background: rgba(51, 144, 236, 0.05);
+    border-radius: 22px;
+    animation: fadeInBoard 0.4s ease;
 }
 
 .ttt-cell {
     background: var(--tg-theme-bg-color, #ffffff);
-    border-radius: 14px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -497,8 +469,8 @@ nav button:active {
     line-height: 1;
     aspect-ratio: 1 / 1;
     cursor: default;
-    transition: all 0.15s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    transition: transform 0.15s ease, background 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     user-select: none;
     -webkit-user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -506,20 +478,26 @@ nav button:active {
 
 .ttt-cell[data-clickable="1"] {
     cursor: pointer;
-    background: rgba(51, 144, 236, 0.06);
+    background: rgba(51, 144, 236, 0.08);
 }
 
 .ttt-cell[data-clickable="1"]:active {
-    transform: scale(0.94);
-    background: rgba(51, 144, 236, 0.15);
+    transform: scale(0.92);
+    background: rgba(51, 144, 236, 0.2);
 }
 
 .ttt-cell.x {
     color: #3390ec;
-    text-shadow: 0 2px 8px rgba(51, 144, 236, 0.3);
+    text-shadow: 0 2px 10px rgba(51, 144, 236, 0.35);
+    animation: popIn 0.3s ease;
 }
 
 .ttt-cell.o {
     color: #e67e22;
-    text-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+    text-shadow: 0 2px 10px rgba(230, 126, 34, 0.35);
+    animation: popIn 0.3s ease;
+}
+
+.ttt-cell.winning {
+    animation: winPulse 1s ease-in-out infinite;
 }

@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentGame = null;
     let gameRefreshTimer = null;
+    let lastBoard = '';
 
     function getUserId() {
         if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) return tg.initDataUnsafe.user.id;
@@ -158,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const pairLabel = `${fromCur} → ${toCur}`;
         const currentPrice = getCurrentRate(fromCur, toCur);
         const currentPriceText = currentPrice !== null ? currentPrice.toFixed(currentPrice < 1 ? 4 : 2) : '—';
-
         render(`
             <h2>📈 ${pairLabel}</h2>
             <div style="text-align:center; margin: 12px 0 4px 0;">
@@ -193,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('chartInfo').textContent = 'Загрузка...';
         document.getElementById('chartChange').textContent = '—';
         document.getElementById('chartMinMax').innerHTML = '<span>Мин: —</span><span>Макс: —</span>';
-
         try {
             let url;
             if (toCur === 'RUB' || fromCur === 'RUB') {
@@ -205,7 +204,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const r = await fetch(url, { headers: HEADERS });
             const d = await r.json();
             if (!d.success) { document.getElementById('chartInfo').textContent = '❌ ' + (d.error || 'Ошибка'); return; }
-
             const values = d.values;
             const currentPrice = getCurrentRate(fromCur, toCur);
             const firstValue = values[0];
@@ -214,7 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const diff = currentPrice - firstValue;
             const diffPercent = (diff / firstValue) * 100;
             const decimals = currentPrice < 1 ? 4 : 2;
-
             const changeEl = document.getElementById('chartChange');
             if (diff >= 0) {
                 changeEl.style.color = '#27ae60';
@@ -224,37 +221,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 changeEl.textContent = `за ${days} дн.: ▼ ${diff.toFixed(decimals)} (${diffPercent.toFixed(2)}%)`;
             }
             document.getElementById('chartMinMax').innerHTML = `<span>Мин: ${minValue.toFixed(decimals)}</span><span>Макс: ${maxValue.toFixed(decimals)}</span>`;
-
             const lineColor = diff >= 0 ? '#27ae60' : '#e74c3c';
             const gradientColorTop = diff >= 0 ? 'rgba(39, 174, 96, 0.3)' : 'rgba(231, 76, 60, 0.3)';
             const gradientColorBottom = diff >= 0 ? 'rgba(39, 174, 96, 0.02)' : 'rgba(231, 76, 60, 0.02)';
-
             const ctx = document.getElementById('rateChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 220);
             gradient.addColorStop(0, gradientColorTop);
             gradient.addColorStop(1, gradientColorBottom);
-
             currentChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: d.dates.map(date => { const [y, m, day] = date.split('-'); return `${day}.${m}`; }),
-                    datasets: [{
-                        label: `${d.from}/${d.to}`, data: values,
-                        borderColor: lineColor, backgroundColor: gradient,
-                        borderWidth: 2, fill: true, tension: 0.4,
-                        pointRadius: 0, pointHoverRadius: 5, pointHoverBackgroundColor: lineColor
-                    }]
+                    datasets: [{ label: `${d.from}/${d.to}`, data: values, borderColor: lineColor, backgroundColor: gradient, borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0, pointHoverRadius: 5 }]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 10, callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}` } }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { maxTicksLimit: 6, font: { size: 11 } } },
-                        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 } } }
-                    },
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 10, cornerRadius: 10, callbacks: { label: (ctx) => `${ctx.parsed.y.toFixed(decimals)} ${d.to}` } } },
+                    scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { grid: { color: 'rgba(0,0,0,0.05)' } } },
                     interaction: { intersect: false, mode: 'index' }
                 }
             });
@@ -271,7 +254,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <div id="weather-animation-container" style="width:100%;max-width:320px;height:220px;margin:10px auto;"></div>
             <p style="text-align:center;font-size:17px;">🌡️ <b>${weather.temp}</b></p>
             <p style="text-align:center;font-size:17px;">💨 <b>${weather.wind}</b></p>
-            <p style="text-align:center;font-size:12px;color:gray;margin-top:12px;">Обновлено: ${new Date().toLocaleTimeString()}</p>
         `);
         const c = document.getElementById('weather-animation-container');
         if (c && window.lottie) { stopLottie(); lottieAnimation = lottie.loadAnimation({ container: c, renderer: 'svg', loop: true, autoplay: true, path: anim }); }
@@ -331,9 +313,10 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderTttLobby() {
         render(`
             <h2>❌⭕ Крестики-нолики</h2>
-            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга</p>
+            <p style="text-align:center; color:gray; font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга, или сыграй с ботом</p>
             <button class="action-btn" id="createGameBtn">➕ Создать игру</button>
             <button class="action-btn secondary" id="botGameBtn">🤖 Играть с ботом</button>
+            <p style="font-size:12px; color:gray; margin-top:20px; text-align:center;">Ты будешь играть за ❌</p>
         `);
         document.getElementById('createGameBtn').addEventListener('click', createGame);
         document.getElementById('botGameBtn').addEventListener('click', startBotGame);
@@ -352,7 +335,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function startBotGame() {
-        alert('🤖 Игра с ботом — в разработке.');
+        try {
+            const r = await fetch(`${API_URL}/api/game/start_bot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...HEADERS },
+                body: JSON.stringify({ user_id: getUserId() })
+            });
+            const d = await r.json();
+            if (d.success) await loadGameState(d.game_id);
+        } catch (e) { alert('Ошибка'); }
     }
 
     async function loadGameState(game_id) {
@@ -362,6 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const d = await r.json();
             if (!d.success) { renderTttLobby(); return; }
             currentGame = d.game;
+            lastBoard = '';
             renderGameBoard();
             startGameAutoRefresh(game_id);
         } catch (e) { renderTttLobby(); }
@@ -370,28 +362,43 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGameBoard() {
         const g = currentGame;
         const board = g.board.split('');
+        const boardChanged = g.board !== lastBoard;
 
         let statusText = '', statusColor = 'gray';
         if (g.status === 'waiting') { statusText = '⏳ Ждём соперника...'; statusColor = '#f39c12'; }
         else if (g.status === 'active') {
             if (g.is_my_turn) { statusText = '🎯 Твой ход'; statusColor = '#27ae60'; }
-            else { statusText = '⏳ Ход соперника'; statusColor = '#e67e22'; }
+            else { statusText = g.is_vs_bot ? '🤖 Ход бота...' : '⏳ Ход соперника'; statusColor = '#e67e22'; }
         } else if (g.status === 'finished') {
             if (g.winner_id === getUserId()) { statusText = '🏆 Ты победил!'; statusColor = '#27ae60'; }
             else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = '#3498db'; }
             else { statusText = '😔 Ты проиграл'; statusColor = '#e74c3c'; }
         }
 
+        // Найти выигрышную линию
+        let winningLine = null;
+        const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        for (const line of WIN_LINES) {
+            const [a, b, c] = line;
+            if (board[a] !== '-' && board[a] === board[b] && board[b] === board[c]) {
+                winningLine = line;
+                break;
+            }
+        }
+
         let boardHtml = '<div class="ttt-board">';
         for (let i = 0; i < 9; i++) {
             const cell = board[i];
-            const cellClass = cell === 'X' ? 'ttt-cell x' : cell === 'O' ? 'ttt-cell o' : 'ttt-cell';
+            let cellClass = 'ttt-cell';
+            if (cell === 'X') cellClass += ' x';
+            else if (cell === 'O') cellClass += ' o';
+            if (winningLine && winningLine.includes(i)) cellClass += ' winning';
             const canClick = g.status === 'active' && g.is_my_turn && cell === '-';
             boardHtml += `<div class="${cellClass}" data-pos="${i}" ${canClick ? 'data-clickable="1"' : ''}>${cell === '-' ? '' : cell}</div>`;
         }
         boardHtml += '</div>';
 
-        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: @${escapeHtml(g.opponent_username)}</p>` : '';
+        let opponentInfo = g.opponent_username ? `<p style="text-align:center; font-size:13px; color:gray; margin-top:12px;">Соперник: ${escapeHtml(g.opponent_username)}</p>` : '';
 
         let buttonsHtml = '';
         if (g.status === 'waiting') {
@@ -409,6 +416,15 @@ document.addEventListener('DOMContentLoaded', function() {
             ${opponentInfo}
             <div style="margin-top:20px;">${buttonsHtml}</div>
         `);
+
+        // Анимация появления новой фигуры
+        if (boardChanged) {
+            document.querySelectorAll('.ttt-cell.x, .ttt-cell.o').forEach(cell => {
+                cell.style.animation = 'none';
+                setTimeout(() => { cell.style.animation = ''; }, 10);
+            });
+        }
+        lastBoard = g.board;
 
         document.querySelectorAll('.ttt-cell[data-clickable="1"]').forEach(cell => {
             cell.addEventListener('click', function() { makeMove(parseInt(this.getAttribute('data-pos'))); });
@@ -498,12 +514,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const bg = isMe ? 'background: rgba(51, 144, 236, 0.1);' : '';
                 html += `<div style="display:flex; align-items:center; padding:10px 12px; border-radius:10px; margin-bottom:6px; ${bg}">
                     <div style="font-size:18px; width:36px;">${medal}</div>
-                    <div style="flex:1;">
-                        <div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
-                        <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div>
-                    </div>
-                    <div style="font-weight:700; color:#3390ec;">${p.rating}</div>
-                </div>`;
+                    <div style="flex:1;"><div style="font-weight:600;">@${escapeHtml(p.username || 'игрок')}</div>
+                    <div style="font-size:12px; color:gray;">⚔️ ${p.wins}П / ${p.losses}П / ${p.draws}Н</div></div>
+                    <div style="font-weight:700; color:#3390ec;">${p.rating}</div></div>`;
             });
             html += `</div>`;
             render(html);
