@@ -234,6 +234,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">ПОДЗЕМЕЛЬЕ</div>
                     <div class="game-card-stats">Рогалик</div>
                 </div>
+                <div class="game-card" data-game="cards">
+                    <div class="game-card-icon">🃏</div>
+                    <div class="game-card-title">КАРТЫ</div>
+                    <div class="game-card-stats">Рогалик</div>
+                </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
                     <div class="game-card-icon" style="opacity:0.4;">➕</div>
@@ -251,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'checkers') { currentView = 'game_checkers'; showCheckers(); }
                 else if (game === 'battleship') openBattleship();
                 else if (game === 'dungeon') openDungeonCrawl();
+                else if (game === 'cards') openHouseOfCards();
             });
         });
         setupPlatformTabs();
@@ -499,6 +505,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const frame = document.getElementById('battleship-frame');
         container.querySelector('span').textContent = '🐉 Подземелье';
         frame.src = 'html-dungeon-crawl-main/html_dungeon_crawl.html';
+        container.style.display = 'block';
+    }
+
+    function openHouseOfCards() {
+        const container = document.getElementById('battleship-container');
+        const frame = document.getElementById('battleship-frame');
+        container.querySelector('span').textContent = '🃏 Карты';
+        frame.src = 'HouseOfCards-main/builds/house_of_cards.html';
         container.style.display = 'block';
     }
 
