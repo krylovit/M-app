@@ -229,6 +229,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">ШАШКИ</div>
                     <div class="game-card-stats">Играй с другом</div>
                 </div>
+                <div class="game-card" data-game="dungeon">
+                    <div class="game-card-icon">🐉</div>
+                    <div class="game-card-title">ПОДЗЕМЕЛЬЕ</div>
+                    <div class="game-card-stats">Рогалик</div>
+                </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
                     <div class="game-card-icon" style="opacity:0.4;">➕</div>
@@ -245,6 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'c4') { currentView = 'game_c4'; showConnectFour(); }
                 else if (game === 'checkers') { currentView = 'game_checkers'; showCheckers(); }
                 else if (game === 'battleship') openBattleship();
+                else if (game === 'dungeon') openDungeonCrawl();
             });
         });
         setupPlatformTabs();
@@ -483,9 +489,16 @@ document.addEventListener('DOMContentLoaded', function() {
     function openBattleship() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        if (!frame.src || frame.src === 'about:blank' || frame.src.endsWith('/')) {
-            frame.src = 'battleship/battleship.html';
-        }
+        container.querySelector('span').textContent = '⚓ Морской бой';
+        frame.src = 'battleship/battleship.html';
+        container.style.display = 'block';
+    }
+
+    function openDungeonCrawl() {
+        const container = document.getElementById('battleship-container');
+        const frame = document.getElementById('battleship-frame');
+        container.querySelector('span').textContent = '🐉 Подземелье';
+        frame.src = 'html-dungeon-crawl-main/html_dungeon_crawl.html';
         container.style.display = 'block';
     }
 
@@ -1014,7 +1027,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const g = currentCheckersGame;
         if (!g) return;
 
-        // Ищем точный ход в legal_moves
         let actualMove = null;
         if (g.legal_moves) {
             actualMove = g.legal_moves.find(m => {
