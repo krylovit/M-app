@@ -528,7 +528,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const frame = document.getElementById('battleship-frame');
         container.querySelector('span').textContent = '🕹️ Ретро-игры';
 
-        // Сюда добавляй новые игры:
         const GAMES = [
             { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
             { title: 'Super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     }
