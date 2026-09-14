@@ -542,7 +542,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const GAMES = [
             { title: 'Micro Machines', name: 'micromachines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD', icon: 'icons/micromachines.jpg' },
             { title: 'Super',         name: 'super',         rom: 'roms/Super/Super.nes',                    core: 'nestopia',     icon: 'icons/super.jpg' },
-            { title: 'Nova the Squirrel', name: 'novasquirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nestopia',     icon: 'icons/novasquirrel.jpg' }
+            { title: 'Nova the Squirrel', name: 'novasquirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nestopia',     icon: 'icons/novasquirrel.jpg' },
+            { title: 'Battle City', name: 'battlecity', rom: 'roms/Battle City/Battle City.nes',            core: 'nestopia',     icon: 'icons/battlecity.jpg' }
         ];
 
         const html = `<!DOCTYPE html>
