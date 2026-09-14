@@ -239,6 +239,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">КАРТЫ</div>
                     <div class="game-card-stats">Рогалик</div>
                 </div>
+                <div class="game-card" data-game="retro">
+                    <div class="game-card-icon">🕹️</div>
+                    <div class="game-card-title">РЕТРО</div>
+                    <div class="game-card-stats">Эмулятор</div>
+                </div>
                 <div class="game-card" data-game="unity">
                     <div class="game-card-icon">🎮</div>
                     <div class="game-card-title">3D ИГРА</div>
@@ -267,6 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'battleship') { currentView = 'game_battleship'; showBattleshipLobby(); }
                 else if (game === 'dungeon') openDungeonCrawl();
                 else if (game === 'cards') openHouseOfCards();
+                else if (game === 'retro') openRetroMenu();
                 else if (game === 'unity') openUnity();
                 else if (game === 'unity_touch') openUnityTouch();
             });
@@ -508,6 +514,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
         frame.src = 'battleship/battleship.html';
+        container.style.display = 'block';
+        showCloseBtn();
+    }
+
+    function openRetroMenu() {
+        const container = document.getElementById('battleship-container');
+        const frame = document.getElementById('battleship-frame');
+        frame.src = 'emulator.html';
         container.style.display = 'block';
         showCloseBtn();
     }
