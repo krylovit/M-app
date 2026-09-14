@@ -521,19 +521,58 @@ document.addEventListener('DOMContentLoaded', function() {
     function openRetroMenu() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        frame.src = 'emulator.html';
+
+        const GAMES = [
+            { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
+            { title: 'Super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     },
+            { title: 'Nova the Squirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nes'     }
+        ];
+
+        const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+    body { margin:0; background:#0f1b3d; color:#e0e6f0; font-family: sans-serif; padding:16px; }
+    h2 { color:#00d4ff; text-align:center; font-size:18px; margin:8px 0 16px; }
+    .list { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .item {
+        background:linear-gradient(145deg,#1a2a5c,#0f1b3d);
+        border:1px solid #00d4ff44; border-radius:12px;
+        padding:14px 8px; text-align:center; cursor:pointer;
+        transition: 0.2s; user-select:none;
+    }
+    .item:active { transform: scale(0.96); border-color:#00d4ff; }
+    .icon { font-size:28px; margin-bottom:6px; }
+    .name { font-size:12px; font-weight:600; }
+</style>
+</head>
+<body>
+<h2>\u{1F579}\uFE0F \u0412\u044B\u0431\u0435\u0440\u0438 \u0438\u0433\u0440\u0443</h2>
+<div class="list">
+${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}">
+    <div class="icon">\u{1F3AE}</div>
+    <div class="name">${g.title}</div>
+</div>`).join('')}
+</div>
+<script>
+document.querySelectorAll('.item').forEach(function(el) {
+    el.addEventListener('click', function() {
+        var rom = el.getAttribute('data-rom');
+        var core = el.getAttribute('data-core');
+        window.location.href = 'emulator.html?rom=' + encodeURIComponent(rom) + '&core=' + core;
+    });
+});
+<\/script>
+</body>
+</html>`;
+
+        frame.src = 'about:blank';
+        frame.srcdoc = html;
         container.style.display = 'block';
         showCloseBtn();
     }
-
-    window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'closeRetro') {
-            const container = document.getElementById('battleship-container');
-            const frame = document.getElementById('battleship-frame');
-            frame.src = 'about:blank';
-            container.style.display = 'none';
-        }
-    });
 
     function openDungeonCrawl() {
         const container = document.getElementById('battleship-container');

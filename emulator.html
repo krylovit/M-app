@@ -1,130 +1,36 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🕹️ Ретро-игры</title>
+    <title>Эмулятор</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0a0e27;
-            color: #e0e6f0;
-            font-family: 'Inter', sans-serif;
+            background: #000;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-
-        /* ===== МЕНЮ ВЫБОРА ИГРЫ ===== */
-        #menu-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            padding: 20px;
-        }
-        #menu-screen h2 {
-            color: #00d4ff;
-            font-size: 22px;
-            margin-bottom: 24px;
-            text-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-        }
-        .game-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            max-width: 400px;
+        #game {
             width: 100%;
+            height: 100%;
         }
-        .game-item {
-            background: linear-gradient(145deg, #1a2a5c, #0f1b3d);
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 14px;
-            padding: 18px 10px;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .game-item:active {
-            transform: scale(0.95);
-            border-color: #00d4ff;
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
-        }
-        .game-item .icon { font-size: 32px; margin-bottom: 8px; }
-        .game-item .name { font-size: 13px; font-weight: 600; }
-        .game-item .platform { font-size: 10px; color: #8892b0; margin-top: 4px; }
-        .back-btn {
-            margin-top: 24px;
-            background: none;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #8892b0;
-            padding: 8px 20px;
-            border-radius: 10px;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .back-btn:active { color: #e0e6f0; border-color: #00d4ff; }
 
-        /* ===== ЭКРАН ИГРЫ ===== */
-        #game-screen {
-            display: none;
-            flex-direction: column;
-            height: 100vh;
-        }
-        #game-screen.active { display: flex; }
-        #emulator-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
-            position: relative;
-            min-height: 0;
-        }
-        #emulator-container canvas {
-            max-width: 100%;
-            max-height: 100%;
-            image-rendering: pixelated;
-        }
-        .game-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: #0f1b3d;
-            border-bottom: 1px solid rgba(0, 212, 255, 0.15);
-            flex-shrink: 0;
-        }
-        .game-header .title {
-            color: #00d4ff;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        .game-header button {
-            background: rgba(255, 46, 99, 0.15);
-            border: 1px solid rgba(255, 46, 99, 0.4);
-            color: #ff2e63;
-            padding: 6px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            cursor: pointer;
-        }
-        .game-header button:active { background: rgba(255, 46, 99, 0.3); }
-
-        /* ===== ВИРТУАЛЬНЫЙ ДЖОЙСТИК ===== */
+        /* Виртуальный джойстик */
         #touch-controls {
             display: none;
-            position: absolute;
+            position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             height: 160px;
             pointer-events: none;
-            z-index: 10;
+            z-index: 9999;
         }
-        #touch-controls.active { display: flex; }
+        #touch-controls.active { display: block; }
         .dpad {
             position: absolute;
             bottom: 20px;
@@ -161,7 +67,7 @@
             gap: 10px;
             pointer-events: auto;
         }
-        .action-btn {
+        .act-btn {
             width: 56px;
             height: 56px;
             border-radius: 50%;
@@ -175,8 +81,8 @@
             justify-content: center;
             cursor: pointer;
         }
-        .action-btn:active { background: rgba(255, 170, 0, 0.4); }
-        .action-btn.small { width: 44px; height: 44px; font-size: 11px; }
+        .act-btn:active { background: rgba(255, 170, 0, 0.4); }
+        .act-btn.small { width: 44px; height: 44px; font-size: 11px; }
 
         .center-btns {
             position: absolute;
@@ -202,50 +108,11 @@
             cursor: pointer;
         }
         .center-btn:active { background: rgba(255, 255, 255, 0.2); }
-
-        /* Загрузка */
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #00d4ff;
-            font-size: 16px;
-            text-align: center;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(0, 212, 255, 0.2);
-            border-top-color: #00d4ff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 12px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+    <div id="game"></div>
 
-<!-- МЕНЮ ВЫБОРА -->
-<div id="menu-screen">
-    <h2>🕹️ Выбери игру</h2>
-    <div class="game-list" id="game-list"></div>
-    <button class="back-btn" id="menuBackBtn">🔙 Назад</button>
-</div>
-
-<!-- ЭКРАН ИГРЫ -->
-<div id="game-screen">
-    <div class="game-header">
-        <span class="title" id="game-title">🎮 Загрузка...</span>
-        <button id="exitGameBtn">🔙 В меню</button>
-    </div>
-    <div id="emulator-container">
-        <div id="loading">
-            <div class="spinner"></div>
-            <div>Загрузка эмулятора...</div>
-        </div>
-    </div>
     <div id="touch-controls">
         <div class="dpad">
             <div class="dpad-btn dpad-up" data-key="ArrowUp">▲</div>
@@ -258,126 +125,70 @@
             <div class="center-btn" data-key="Start">START</div>
         </div>
         <div class="action-btns">
-            <div class="action-btn small" data-key="KeyB">B</div>
-            <div class="action-btn" data-key="KeyA">A</div>
+            <div class="act-btn small" data-key="KeyB">B</div>
+            <div class="act-btn" data-key="KeyA">A</div>
         </div>
     </div>
-</div>
 
-<script>
-(function() {
-    const GAMES = [
-        { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD', platform: 'Sega' },
-        { title: 'Super', rom: 'roms/Super/Super.nes', core: 'nes', platform: 'NES' },
-        { title: 'Nova the Squirrel', rom: 'roms/Nova the Squirrel/nova.nes', core: 'nes', platform: 'NES' }
-    ];
+    <script>
+        var params = new URLSearchParams(window.location.search);
+        var romPath = params.get('rom') || '';
+        var coreType = params.get('core') || 'nes';
 
-    const menuScreen = document.getElementById('menu-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const gameList = document.getElementById('game-list');
-    const gameTitle = document.getElementById('game-title');
-    const exitBtn = document.getElementById('exitGameBtn');
-    const menuBackBtn = document.getElementById('menuBackBtn');
-    const emuContainer = document.getElementById('emulator-container');
-    const touchControls = document.getElementById('touch-controls');
-    const loading = document.getElementById('loading');
+        EJS_player = '#game';
+        EJS_core = coreType;
+        EJS_gameUrl = romPath;
+        EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+        EJS_startOnLoaded = true;
+        EJS_VirtualGamepadSettings = [];
+    </script>
+    <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
 
-    // Рендерим список игр
-    GAMES.forEach((g, i) => {
-        const el = document.createElement('div');
-        el.className = 'game-item';
-        el.innerHTML = '<div class="icon">🎮</div><div class="name">' + g.title + '</div><div class="platform">' + g.platform + '</div>';
-        el.addEventListener('click', function() { startGame(i); });
-        gameList.appendChild(el);
-    });
-
-    menuBackBtn.addEventListener('click', function() {
-        if (window.parent !== window) {
-            window.parent.postMessage({ type: 'closeRetro' }, '*');
-        } else {
-            window.history.back();
-        }
-    });
-
-    exitBtn.addEventListener('click', function() { stopGame(); });
-
-    function startGame(idx) {
-        var g = GAMES[idx];
-        menuScreen.style.display = 'none';
-        gameScreen.classList.add('active');
-        gameTitle.textContent = '🎮 ' + g.title;
-        loading.style.display = 'block';
-
-        // Показываем тач-контролы на мобильных
+    <script>
+    (function() {
         var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window);
-        if (isMobile) touchControls.classList.add('active');
-
-        // Загружаем EmulatorJS
-        var script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/gh/EmulatorJS/EmulatorJS@4.0.2/data/emulator.min.js';
-        script.onload = function() {
-            loading.style.display = 'none';
-            EJS_player = '#emulator-container';
-            EJS_gameUrl = g.rom;
-            EJS_gameID = g.title.replace(/\s/g, '_');
-            EJS_core = g.core;
-            EJS_pathtodata = 'https://cdn.jsdelivr.net/gh/EmulatorJS/EmulatorJS@4.0.2/data/';
-            EJS_startOnLoaded = true;
-        };
-        document.body.appendChild(script);
-    }
-
-    function stopGame() {
-        // Перезагружаем страницу чтобы убить эмулятор
-        location.reload();
-    }
-
-    // ===== ВИРТУАЛЬНЫЙ ДЖОЙСТИК =====
-    var keyMap = {
-        'ArrowUp': { code: 'ArrowUp', key: 'ArrowUp' },
-        'ArrowDown': { code: 'ArrowDown', key: 'ArrowDown' },
-        'ArrowLeft': { code: 'ArrowLeft', key: 'ArrowLeft' },
-        'ArrowRight': { code: 'ArrowRight', key: 'ArrowRight' },
-        'KeyA': { code: 'KeyA', key: 'a' },
-        'KeyB': { code: 'KeyB', key: 'b' },
-        'Start': { code: 'Enter', key: 'Enter' },
-        'Select': { code: 'ShiftRight', key: 'Shift' }
-    };
-
-    function pressKey(keyId, isDown) {
-        var k = keyMap[keyId];
-        if (!k) return;
-        var event = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
-            code: k.code,
-            key: k.key,
-            bubbles: true,
-            cancelable: true
-        });
-        document.dispatchEvent(event);
-    }
-
-    document.querySelectorAll('.dpad-btn, .action-btn, .center-btn').forEach(function(btn) {
-        var keyId = btn.getAttribute('data-key');
-        if (!keyId) return;
-
-        var start = function(e) { e.preventDefault(); pressKey(keyId, true); };
-        var end = function(e) { e.preventDefault(); pressKey(keyId, false); };
-
-        btn.addEventListener('touchstart', start, { passive: false });
-        btn.addEventListener('touchend', end, { passive: false });
-        btn.addEventListener('touchcancel', end, { passive: false });
-        btn.addEventListener('mousedown', start);
-        btn.addEventListener('mouseup', end);
-        btn.addEventListener('mouseleave', end);
-    });
-
-    // Слушаем сообщение от родителя для закрытия
-    window.addEventListener('message', function(e) {
-        if (e.data && e.data.type === 'closeRetro') {
-            stopGame();
+        if (isMobile) {
+            document.getElementById('touch-controls').classList.add('active');
         }
-    });
-})();
-</script>
+
+        var keyMap = {
+            'ArrowUp': { code: 'ArrowUp', key: 'ArrowUp' },
+            'ArrowDown': { code: 'ArrowDown', key: 'ArrowDown' },
+            'ArrowLeft': { code: 'ArrowLeft', key: 'ArrowLeft' },
+            'ArrowRight': { code: 'ArrowRight', key: 'ArrowRight' },
+            'KeyA': { code: 'KeyA', key: 'a' },
+            'KeyB': { code: 'KeyB', key: 'b' },
+            'Start': { code: 'Enter', key: 'Enter' },
+            'Select': { code: 'ShiftRight', key: 'Shift' }
+        };
+
+        function pressKey(keyId, isDown) {
+            var k = keyMap[keyId];
+            if (!k) return;
+            var event = new KeyboardEvent(isDown ? 'keydown' : 'keyup', {
+                code: k.code,
+                key: k.key,
+                bubbles: true,
+                cancelable: true
+            });
+            document.dispatchEvent(event);
+        }
+
+        document.querySelectorAll('.dpad-btn, .act-btn, .center-btn').forEach(function(btn) {
+            var keyId = btn.getAttribute('data-key');
+            if (!keyId) return;
+
+            var start = function(e) { e.preventDefault(); pressKey(keyId, true); };
+            var end = function(e) { e.preventDefault(); pressKey(keyId, false); };
+
+            btn.addEventListener('touchstart', start, { passive: false });
+            btn.addEventListener('touchend', end, { passive: false });
+            btn.addEventListener('touchcancel', end, { passive: false });
+            btn.addEventListener('mousedown', start);
+            btn.addEventListener('mouseup', end);
+            btn.addEventListener('mouseleave', end);
+        });
+    })();
+    </script>
 </body>
 </html>
