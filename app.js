@@ -526,6 +526,15 @@ document.addEventListener('DOMContentLoaded', function() {
         showCloseBtn();
     }
 
+    window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'closeRetro') {
+            const container = document.getElementById('battleship-container');
+            const frame = document.getElementById('battleship-frame');
+            frame.src = 'about:blank';
+            container.style.display = 'none';
+        }
+    });
+
     function openDungeonCrawl() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
