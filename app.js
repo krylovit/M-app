@@ -1,4 +1,4 @@
-﻿document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
 
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
@@ -245,8 +245,8 @@
                     <div class="game-card-stats">Приставка</div>
                 </div>
                 <div class="game-card" data-game="unity">
-                    <div class="game-card-icon">`u{1F3AE}</div>
-                    <div class="game-card-title">3D `u{418}`u{413}`u{420}`u{430}</div>
+                    <div class="game-card-icon">🎮</div>
+                    <div class="game-card-title">3D ИГРА</div>
                     <div class="game-card-stats">Unity WebGL</div>
                 </div>
                 <div class="game-card disabled">
@@ -531,7 +531,7 @@
     function openUnity() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = 'u{1F3AE} 3D u{418}u{433}u{440}u{430}';
+        container.querySelector('span').textContent = 'u{1F3AE} 3D Иu{433}u{440}а';
         frame.src = 'unity/index.html';
         container.style.display = 'block';
     }
