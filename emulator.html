@@ -50,6 +50,9 @@
         EJS_onGameStart = function() {
             logMsg('info', 'Game started (no save mode)');
         };
+        EJS_onExit = function() {
+            logMsg('err', 'EJS_onExit fired - emulator closed itself');
+        };
     </script>
 
     <script>
@@ -116,10 +119,17 @@
             return req;
         }
         function FakeIDBDatabase() {
+            var fakeStore = {
+                name: 'store', keyPath: null, indexNames: { length: 0, contains: function() { return false; } },
+                put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest,
+                createIndex: function() { return { name: 'idx', objectStore: fakeStore, keyPath: 'key', multiEntry: false, unique: false, get: FakeIDBRequest, getAll: FakeIDBRequest, count: FakeIDBRequest, openCursor: FakeIDBRequest }; },
+                deleteIndex: function() {}, openCursor: FakeIDBRequest
+            };
             return {
-                name: 'fake', version: 1, objectStoreNames: { length: 0, contains: function() { return false; } },
-                createObjectStore: function() { return { put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest, createIndex: function(){}, openCursor: FakeIDBRequest }; },
-                deleteObjectStore: function() {}, transaction: function() { return { objectStore: function() { return { put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest, openCursor: FakeIDBRequest }; }, oncomplete: null, onerror: null, abort: function() {}, commit: function() {} }; },
+                name: 'fake', version: 1, objectStoreNames: { length: 1, contains: function() { return true; }, item: function() { return 'store'; } },
+                createObjectStore: function() { return fakeStore; },
+                deleteObjectStore: function() {},
+                transaction: function() { return { objectStore: function() { return fakeStore; }, oncomplete: null, onerror: null, onabort: null, abort: function() {}, commit: function() {} }; },
                 close: function() {}
             };
         }
