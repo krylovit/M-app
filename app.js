@@ -524,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.data && e.data.type === 'emuLog') {
             var entry = { time: new Date().toLocaleTimeString(), type: e.data.logType, msg: e.data.msg };
             emuErrors.push(entry);
-            if (e.data.logType === 'err') {
+            if (e.data.logType === 'err' || e.data.logType === 'info') {
                 fetch(API_URL + '/api/emu_log', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', ...HEADERS },
