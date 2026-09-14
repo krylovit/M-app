@@ -112,31 +112,44 @@
     </script>
     <script>
     (function() {
-        function NoopPromise() { return Promise.resolve(); }
-        function FakeIDBRequest() {
-            var req = { onsuccess: null, onerror: null, onupgradeneeded: null, result: null, error: null, readyState: 'done', source: null, transaction: null };
+        function FakeReq() {
+            var req = { onsuccess: null, onerror: null, onupgradeneeded: null, result: undefined, error: null, readyState: 'done', source: null, transaction: null };
             setTimeout(function() { if (req.onsuccess) req.onsuccess({ target: req }); }, 0);
             return req;
         }
-        function FakeIDBDatabase() {
-            var fakeStore = {
-                name: 'store', keyPath: null, indexNames: { length: 0, contains: function() { return false; } },
-                put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest,
-                createIndex: function() { return { name: 'idx', objectStore: fakeStore, keyPath: 'key', multiEntry: false, unique: false, get: FakeIDBRequest, getAll: FakeIDBRequest, count: FakeIDBRequest, openCursor: FakeIDBRequest }; },
-                deleteIndex: function() {}, openCursor: FakeIDBRequest
-            };
-            return {
-                name: 'fake', version: 1, objectStoreNames: { length: 1, contains: function() { return true; }, item: function() { return 'store'; } },
-                createObjectStore: function() { return fakeStore; },
-                deleteObjectStore: function() {},
-                transaction: function() { return { objectStore: function() { return fakeStore; }, oncomplete: null, onerror: null, onabort: null, abort: function() {}, commit: function() {} }; },
-                close: function() {}
-            };
+        function fakeStore() {
+            return new Proxy({}, {
+                get: function(t, prop) {
+                    if (prop === 'indexNames') return { length: 0, contains: function() { return false; } };
+                    if (prop === 'name') return 'store';
+                    if (prop === 'keyPath') return null;
+                    if (prop === 'transaction') return null;
+                    if (prop === 'autoIncrement') return false;
+                    if (typeof prop === 'string' && prop !== 'then') return FakeReq;
+                    return undefined;
+                },
+                has: function() { return true; }
+            });
         }
-        var fakeDB = new FakeIDBDatabase();
+        function fakeDB() {
+            return new Proxy({}, {
+                get: function(t, prop) {
+                    if (prop === 'name') return 'fake';
+                    if (prop === 'version') return 1;
+                    if (prop === 'objectStoreNames') return { length: 1, contains: function() { return true; }, item: function() { return 'store'; } };
+                    if (prop === 'createObjectStore') return function() { return fakeStore(); };
+                    if (prop === 'deleteObjectStore') return function() {};
+                    if (prop === 'transaction') return function() { return new Proxy({}, { get: function(t, p) { if (p === 'objectStore') return function() { return fakeStore(); }; if (p === 'abort' || p === 'commit') return function() {}; return null; } }); };
+                    if (prop === 'close') return function() {};
+                    if (prop === 'onversionchange') return null;
+                    return undefined;
+                }
+            });
+        }
+        var _fakeDB = fakeDB();
         var fakeIDB = {
-            open: function() { var req = FakeIDBRequest(); req.result = fakeDB; setTimeout(function() { if (req.onupgradeneeded) req.onupgradeneeded({ target: req }); if (req.onsuccess) req.onsuccess({ target: req }); }, 0); return req; },
-            deleteDatabase: function() { return FakeIDBRequest(); },
+            open: function() { var req = FakeReq(); req.result = _fakeDB; setTimeout(function() { if (req.onupgradeneeded) req.onupgradeneeded({ target: req }); if (req.onsuccess) req.onsuccess({ target: req }); }, 0); return req; },
+            deleteDatabase: function() { return FakeReq(); },
             databases: function() { return Promise.resolve([]); },
             cmp: function() { return 0; }
         };
