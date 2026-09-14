@@ -540,9 +540,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const frame = document.getElementById('battleship-frame');
 
         const GAMES = [
-            { title: 'Micro Machines', name: 'micromachines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
-            { title: 'Super',         name: 'super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     },
-            { title: 'Nova the Squirrel', name: 'novasquirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nes'     }
+            { title: 'Micro Machines', name: 'micromachines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD', icon: 'icons/micromachines.jpg' },
+            { title: 'Super',         name: 'super',         rom: 'roms/Super/Super.nes',                    core: 'nes',     icon: 'icons/super.jpg' },
+            { title: 'Nova the Squirrel', name: 'novasquirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nes',     icon: 'icons/novasquirrel.jpg' }
         ];
 
         const html = `<!DOCTYPE html>
@@ -558,10 +558,11 @@ document.addEventListener('DOMContentLoaded', function() {
         background:linear-gradient(145deg,#1a2a5c,#0f1b3d);
         border:1px solid #00d4ff44; border-radius:12px;
         padding:14px 8px; text-align:center; cursor:pointer;
-        transition: 0.2s; user-select:none;
+        transition: 0.2s; user-select:none; overflow:hidden;
     }
     .item:active { transform: scale(0.96); border-color:#00d4ff; }
-    .icon { font-size:28px; margin-bottom:6px; }
+    .item img { width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:#0f1b3d; }
+    .item .emoji { font-size:28px; margin-bottom:6px; }
     .name { font-size:12px; font-weight:600; }
 </style>
 </head>
@@ -569,7 +570,8 @@ document.addEventListener('DOMContentLoaded', function() {
 <h2>\u{1F579}\uFE0F \u0412\u044B\u0431\u0435\u0440\u0438 \u0438\u0433\u0440\u0443</h2>
 <div class="list">
 ${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}" data-name="${g.name}">
-    <div class="icon">\u{1F3AE}</div>
+    <img src="${g.icon}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'" alt="${g.title}">
+    <div class="emoji" style="display:none">\u{1F3AE}</div>
     <div class="name">${g.title}</div>
 </div>`).join('')}
 </div>
