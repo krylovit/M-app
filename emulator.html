@@ -108,7 +108,7 @@
         };
 
         logMsg('info', 'Emulator started: core=' + coreType + ' rom=' + romPath);
-        logMsg('info', 'BUILD: wakeLock-fix1');
+        logMsg('info', 'BUILD: wakeLock-fix2');
     })();
     </script>
     <script>
@@ -164,9 +164,9 @@
             navigator.storage.estimate = function() { return Promise.resolve({ quota: 1073741824, usage: 0 }); };
         }
         if (navigator.wakeLock) {
-            navigator.wakeLock.request = function() { return Promise.reject(new Error('wakeLock not supported')); };
+            navigator.wakeLock.request = function() { return Promise.resolve({ released: true, type: 'screen', addEventListener: function() {}, removeEventListener: function() {}, release: function() { return Promise.resolve(); } }); };
         }
-        try { Object.defineProperty(navigator, 'wakeLock', { value: { request: function() { return Promise.reject(new Error('not supported')); } }, configurable: true }); } catch(e) {}
+        try { Object.defineProperty(navigator, 'wakeLock', { value: { request: function() { return Promise.resolve({ released: true, type: 'screen', addEventListener: function() {}, removeEventListener: function() {}, release: function() { return Promise.resolve(); } }); } }, configurable: true }); } catch(e) {}
     })();
     </script>
     <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
