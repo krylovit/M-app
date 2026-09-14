@@ -162,6 +162,17 @@
         logMsg('info', 'Emulator started: core=' + coreType + ' rom=' + romPath);
     })();
     </script>
+    <script>
+    (function() {
+        window.indexedDB = undefined;
+        try { delete window.indexedDB; } catch(e) {}
+        try { Object.defineProperty(window, 'indexedDB', { get: function() { return undefined; } }); } catch(e) {}
+        if (window.caches) {
+            window.caches = undefined;
+            try { Object.defineProperty(window, 'caches', { get: function() { return undefined; } }); } catch(e) {}
+        }
+    })();
+    </script>
     <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
 </body>
 </html>
