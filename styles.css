@@ -1061,3 +1061,120 @@ nav button.nav-games:active {
     content: '♚';
     color: #ffcc44;
 }
+
+/* ===== МОРСКОЙ БОЙ (СЕТЕВОЙ) ===== */
+.bs-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 1px;
+    max-width: 100%;
+    padding: 4px;
+    border-radius: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+}
+
+.bs-cell {
+    aspect-ratio: 1 / 1;
+    background: var(--bg-panel);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
+}
+
+.bs-cell.ship {
+    background: var(--accent-blue);
+    opacity: 0.7;
+}
+
+.bs-cell.hit {
+    background: var(--accent-pink);
+    opacity: 1;
+}
+
+.bs-cell.hit::after {
+    content: '💥';
+    font-size: 10px;
+}
+
+.bs-cell.miss {
+    background: var(--bg-card);
+    opacity: 0.5;
+}
+
+.bs-cell.miss::after {
+    content: '•';
+    color: var(--text-dim);
+    font-size: 16px;
+}
+
+.bs-cell.clickable {
+    cursor: pointer;
+}
+
+.bs-cell.clickable:hover {
+    background: var(--accent-amber);
+    opacity: 0.4;
+}
+
+.bs-ship-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.bs-ship-item {
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-subtle);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.bs-ship-item.active {
+    border-color: var(--accent-blue);
+    background: rgba(0, 136, 204, 0.15);
+}
+
+.bs-ship-item.placed {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.bs-placement-grid {
+    margin: 0 auto;
+    max-width: 340px;
+}
+
+.bs-battle-boards {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.bs-board-section {
+    width: 100%;
+    max-width: 340px;
+}
+
+.bs-board-section h3 {
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--text-dim);
+}
+
+.bs-board-section .bs-grid {
+    margin: 0 auto;
+}
