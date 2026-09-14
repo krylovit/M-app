@@ -139,7 +139,7 @@
                     if (prop === 'objectStoreNames') return { length: 1, contains: function() { return true; }, item: function() { return 'store'; } };
                     if (prop === 'createObjectStore') return function() { return fakeStore(); };
                     if (prop === 'deleteObjectStore') return function() {};
-                    if (prop === 'transaction') return function() { return new Proxy({}, { get: function(t, p) { if (p === 'objectStore') return function() { return fakeStore(); }; if (p === 'abort' || p === 'commit') return function() {}; return null; } }); };
+                    if (prop === 'transaction') return function() { return new Proxy({}, { get: function(t, p) { if (p === 'objectStore') return function() { return fakeStore(); }; if (p === 'abort' || p === 'commit') return function() {}; return fakeStore(); } }); };
                     if (prop === 'close') return function() {};
                     if (prop === 'onversionchange') return null;
                     return undefined;
