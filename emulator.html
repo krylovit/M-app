@@ -109,17 +109,34 @@
     </script>
     <script>
     (function() {
-        try {
-            Object.defineProperty(window, 'indexedDB', { value: undefined, writable: false, configurable: true });
-        } catch(e) {}
-        try {
-            Object.defineProperty(window, 'caches', { value: undefined, writable: false, configurable: true });
-        } catch(e) {}
+        function NoopPromise() { return Promise.resolve(); }
+        function FakeIDBRequest() {
+            var req = { onsuccess: null, onerror: null, onupgradeneeded: null, result: null, error: null, readyState: 'done', source: null, transaction: null };
+            setTimeout(function() { if (req.onsuccess) req.onsuccess({ target: req }); }, 0);
+            return req;
+        }
+        function FakeIDBDatabase() {
+            return {
+                name: 'fake', version: 1, objectStoreNames: { length: 0, contains: function() { return false; } },
+                createObjectStore: function() { return { put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest, createIndex: function(){}, openCursor: FakeIDBRequest }; },
+                deleteObjectStore: function() {}, transaction: function() { return { objectStore: function() { return { put: FakeIDBRequest, get: FakeIDBRequest, getAll: FakeIDBRequest, delete: FakeIDBRequest, clear: FakeIDBRequest, add: FakeIDBRequest, count: FakeIDBRequest, openCursor: FakeIDBRequest }; }, oncomplete: null, onerror: null, abort: function() {}, commit: function() {} }; },
+                close: function() {}
+            };
+        }
+        var fakeDB = new FakeIDBDatabase();
+        var fakeIDB = {
+            open: function() { var req = FakeIDBRequest(); req.result = fakeDB; setTimeout(function() { if (req.onupgradeneeded) req.onupgradeneeded({ target: req }); if (req.onsuccess) req.onsuccess({ target: req }); }, 0); return req; },
+            deleteDatabase: function() { return FakeIDBRequest(); },
+            databases: function() { return Promise.resolve([]); },
+            cmp: function() { return 0; }
+        };
+        try { Object.defineProperty(window, 'indexedDB', { value: fakeIDB, writable: false, configurable: true }); } catch(e) { window.indexedDB = fakeIDB; }
+        try { Object.defineProperty(window, 'caches', { value: { open: function() { return Promise.resolve({ match: function() { return Promise.resolve(undefined); }, put: function() { return Promise.resolve(); }, delete: function() { return Promise.resolve(); }, keys: function() { return Promise.resolve([]); } }); } }, configurable: true }); } catch(e) {}
         if (navigator.storage && navigator.storage.persist) {
-            navigator.storage.persist = function() { return Promise.resolve(false); };
+            navigator.storage.persist = function() { return Promise.resolve(true); };
         }
         if (navigator.storage && navigator.storage.estimate) {
-            navigator.storage.estimate = function() { return Promise.resolve({ quota: 0, usage: 0 }); };
+            navigator.storage.estimate = function() { return Promise.resolve({ quota: 1073741824, usage: 0 }); };
         }
     })();
     </script>
