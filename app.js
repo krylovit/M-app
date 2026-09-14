@@ -210,8 +210,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <h2>🎮 Игровая платформа</h2>
             <div class="games-grid">
                 <div class="game-card" data-game="ttt">
-                    <div class="game-card-icon">❌⭕</div>
-                    <div class="game-card-title">КРЕСТИКИ</div>
+                    <div class="game-card-icon">🎯</div>
+                    <div class="game-card-title">ГОМОКУ</div>
                     <div class="game-card-stats">${playerStats.wins}П / ${playerStats.losses}П</div>
                 </div>
                 <div class="game-card" data-game="c4">
@@ -544,7 +544,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showCloseBtn();
     }
 
-    // ===== КРЕСТИКИ-НОЛИКИ =====
+    // ===== ГОМОКУ 10×10 =====
     async function showTicTacToe() {
         currentView = 'game_ttt';
         setBackBtnVisible(true);
@@ -562,8 +562,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderTttLobby() {
         render(`
-            <h2>❌⭕ Крестики-нолики</h2>
-            <p style="text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:20px;">Создай игру и пригласи друга, или сыграй с ботом</p>
+            <h2>🎯 Гомоку 10×10</h2>
+            <p style="text-align:center; color:var(--text-dim); font-size:14px; margin-bottom:20px;">Собери 5 в ряд на поле 10×10. Создай игру и пригласи друга, или сыграй с ботом</p>
             <button class="action-btn" id="createGameBtn">➕ Создать игру</button>
             <button class="action-btn secondary" id="botGameBtn">🤖 Играть с ботом</button>
         `);
@@ -613,15 +613,10 @@ document.addEventListener('DOMContentLoaded', function() {
             else if (g.winner_id === null) { statusText = '🤝 Ничья'; statusColor = 'var(--accent-blue)'; }
             else { statusText = '😔 Ты проиграл'; statusColor = 'var(--accent-pink)'; }
         }
-        let winningLine = null;
-        const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-        for (const line of WIN_LINES) {
-            const [a, b, c] = line;
-            if (board[a] !== '-' && board[a] === board[b] && board[b] === board[c]) { winningLine = line; break; }
-        }
-        let boardHtml = '<div class="ttt-board">';
-        for (let i = 0; i < 9; i++) {
-            const cell = board[i];
+        let winningLine = g.winning_line || null;
+        let boardHtml = '<div class="ttt-board gomoku-board">';
+        for (let i = 0; i < 100; i++) {
+            const cell = board[i] || '-';
             let cellClass = 'ttt-cell';
             if (cell === 'X') cellClass += ' x';
             else if (cell === 'O') cellClass += ' o';
@@ -636,7 +631,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (g.status === 'finished') buttonsHtml = `<button class="action-btn" id="newGameBtn">🔄 Новая игра</button><button class="action-btn secondary" id="backToPlatformBtn">🔙 К платформе</button>`;
         else buttonsHtml = `<button class="action-btn secondary" id="leaveGameBtn">🚪 Выйти</button>`;
         render(`
-            <h2>❌⭕ Игра #${g.id}</h2>
+            <h2>🎯 Гомоку #${g.id}</h2>
             <p style="text-align:center; font-size:16px; font-weight:600; color:${statusColor}; margin-bottom:16px;">${statusText}</p>
             ${boardHtml}
             ${opponentInfo}
@@ -698,6 +693,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function cancelCurrentGame() {
         if (!confirm('Отменить игру?')) return;
+        if (currentGame) {
+            try {
+                await fetch(`${API_URL}/api/game/cancel`, {
+                    method: 'POST', headers: HEADERS,
+                    body: JSON.stringify({ game_id: currentGame.id, user_id: getUserId() })
+                });
+            } catch (e) {}
+        }
         stopGameTimer();
         currentGame = null;
         renderTttLobby();
@@ -822,7 +825,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const inviteC4Btn = document.getElementById('inviteC4Btn');
         if (inviteC4Btn) inviteC4Btn.addEventListener('click', () => openInviteDialog(g.id, 'c4'));
         const cancelC4Btn = document.getElementById('cancelC4Btn');
-        if (cancelC4Btn) cancelC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
+        if (cancelC4Btn) cancelC4Btn.addEventListener('click', async () => {
+            if (currentC4Game) {
+                try {
+                    await fetch(`${API_URL}/api/game/c4/cancel`, {
+                        method: 'POST', headers: HEADERS,
+                        body: JSON.stringify({ game_id: currentC4Game.id, user_id: getUserId() })
+                    });
+                } catch (e) {}
+            }
+            stopC4Timer(); currentC4Game = null; renderC4Lobby();
+        });
         const newC4Btn = document.getElementById('newC4Btn');
         if (newC4Btn) newC4Btn.addEventListener('click', () => { stopC4Timer(); currentC4Game = null; renderC4Lobby(); });
         const backBtn = document.getElementById('backToPlatformC4Btn');
@@ -925,6 +938,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const pieces = parseCheckersFen(g.fen);
 
+        let lastMoveCells = [];
+        if (g.last_move) {
+            const parts = g.last_move.split(/[-x]/);
+            lastMoveCells = parts.map(p => parseInt(p)).filter(n => !isNaN(n));
+        }
+
         let boardHtml = '<div class="checkers-board-wrapper"><div class="checkers-board">';
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
@@ -951,6 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (cellNum && selectedCell === cellNum) cellExtra += ' selected';
                 if (cellNum && selectedCell && isLegalTarget(selectedCell, cellNum)) cellExtra += ' legal-target';
+                if (cellNum && lastMoveCells.includes(cellNum)) cellExtra += ' last-move';
 
                 const canClick = g.status === 'active' && g.is_my_turn && cellNum;
 
@@ -988,7 +1008,17 @@ document.addEventListener('DOMContentLoaded', function() {
         const inviteBtn = document.getElementById('inviteCheckersBtn');
         if (inviteBtn) inviteBtn.addEventListener('click', () => openInviteDialog(g.id, 'checkers'));
         const cancelBtn = document.getElementById('cancelCheckersBtn');
-        if (cancelBtn) cancelBtn.addEventListener('click', () => { stopCheckersTimer(); currentCheckersGame = null; renderCheckersLobby(); });
+        if (cancelBtn) cancelBtn.addEventListener('click', async () => {
+            if (currentCheckersGame) {
+                try {
+                    await fetch(`${API_URL}/api/game/checkers/cancel`, {
+                        method: 'POST', headers: HEADERS,
+                        body: JSON.stringify({ game_id: currentCheckersGame.id, user_id: getUserId() })
+                    });
+                } catch (e) {}
+            }
+            stopCheckersTimer(); currentCheckersGame = null; renderCheckersLobby();
+        });
         const newBtn = document.getElementById('newCheckersBtn');
         if (newBtn) newBtn.addEventListener('click', () => { stopCheckersTimer(); currentCheckersGame = null; renderCheckersLobby(); });
         const backBtn = document.getElementById('backToPlatformCheckersBtn');
@@ -1011,15 +1041,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 const color = side.startsWith('W') ? 'white' : 'black';
                 side = side.substring(1);
 
-                let isKing = false;
-                if (side.startsWith('K')) {
-                    isKing = true;
-                    side = side.substring(1);
-                }
-
                 if (!side) continue;
 
                 side.split(',').forEach(cellStr => {
+                    let isKing = false;
+                    if (cellStr.startsWith('K')) {
+                        isKing = true;
+                        cellStr = cellStr.substring(1);
+                    }
                     const cell = parseInt(cellStr);
                     if (!isNaN(cell)) {
                         pieces[cell] = { color, isKing };
