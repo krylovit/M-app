@@ -113,7 +113,8 @@
     <script>
     (function() {
         function FakeReq() {
-            var req = { onsuccess: null, onerror: null, onupgradeneeded: null, result: undefined, error: null, readyState: 'done', source: null, transaction: null };
+            var fakeTx = new Proxy({}, { get: function(t, p) { if (p === 'objectStore') return function() { return fakeStore(); }; if (p === 'abort' || p === 'commit') return function() {}; return fakeStore(); } });
+            var req = { onsuccess: null, onerror: null, onupgradeneeded: null, result: undefined, error: null, readyState: 'done', source: null, transaction: fakeTx };
             setTimeout(function() { if (req.onsuccess) req.onsuccess({ target: req }); }, 0);
             return req;
         }
