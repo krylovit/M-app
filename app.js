@@ -522,34 +522,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.addEventListener('message', function(e) {
         if (e.data && e.data.type === 'emuLog') {
-            emuErrors.push({ time: new Date().toLocaleTimeString(), type: e.data.logType, msg: e.data.msg });
+            var entry = { time: new Date().toLocaleTimeString(), type: e.data.logType, msg: e.data.msg };
+            emuErrors.push(entry);
             if (e.data.logType === 'err') {
-                showEmuErrorBadge();
+                fetch(API_URL + '/api/emu_log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', ...HEADERS },
+                    body: JSON.stringify({ time: entry.time, type: entry.type, msg: entry.msg })
+                }).catch(function() {});
             }
         }
     });
 
-    function showEmuErrorBadge() {
-        var badge = document.getElementById('emu-error-badge');
-        if (!badge) {
-            badge = document.createElement('div');
-            badge.id = 'emu-error-badge';
-            badge.style.cssText = 'position:fixed;top:10px;right:10px;z-index:999999;background:#e74c3c;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-family:sans-serif;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.5);';
-            badge.textContent = '⚠ Ошибка эмулятора (' + emuErrors.filter(function(e){return e.type==='err'}).length + ')';
-            badge.onclick = function() {
-                var text = emuErrors.map(function(e) { return '[' + e.time + '] ' + e.msg; }).join('\n');
-                alert(text);
-            };
-            document.body.appendChild(badge);
-        } else {
-            badge.textContent = '⚠ Ошибка эмулятора (' + emuErrors.filter(function(e){return e.type==='err'}).length + ')';
-        }
-    }
-
     function openRetroMenu() {
         emuErrors = [];
-        var badge = document.getElementById('emu-error-badge');
-        if (badge) badge.remove();
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
 
