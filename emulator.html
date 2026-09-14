@@ -26,10 +26,14 @@
         const params = new URLSearchParams(window.location.search);
         const romPath = params.get('rom') || '';
         const coreType = params.get('core') || 'nes';
+        const gameName = params.get('name') || 'game';
+        const apiUrl = params.get('api') || '';
+        const saveHeaders = apiUrl ? { 'ngrok-skip-browser-warning': 'true' } : {};
 
         EJS_player = '#game';
         EJS_core = coreType;
         EJS_gameUrl = romPath;
+        EJS_gameName = gameName;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
         EJS_startOnLoaded = true;
         EJS_VirtualGamepadSettings = [
@@ -41,11 +45,78 @@
         ];
         EJS_language = 'en';
         EJS_disableLocalStorage = true;
+
+        EJS_onSaveState = function(e) {
+            if (!apiUrl) return;
+            fetch(apiUrl + '/api/emu_save?game=' + encodeURIComponent(gameName) + '&type=state', {
+                method: 'POST',
+                headers: saveHeaders,
+                body: e.state
+            }).then(function(r) { return r.json(); }).then(function(d) {
+                logMsg('info', 'Save state synced: ' + (d.success ? 'OK (' + d.size + ' bytes)' : 'FAIL'));
+            }).catch(function(err) {
+                logMsg('err', 'Save state failed: ' + err.message);
+            });
+        };
+
+        EJS_onLoadState = function() {
+            if (!apiUrl) return;
+            fetch(apiUrl + '/api/emu_load?game=' + encodeURIComponent(gameName) + '&type=state', {
+                headers: saveHeaders
+            }).then(function(r) {
+                if (!r.ok) { logMsg('info', 'No save state found'); return null; }
+                return r.arrayBuffer();
+            }).then(function(buf) {
+                if (buf && window.EJS_emulator) {
+                    window.EJS_emulator.gameManager.loadState(new Uint8Array(buf));
+                    logMsg('info', 'Save state loaded from server');
+                }
+            }).catch(function(err) {
+                logMsg('err', 'Load state failed: ' + err.message);
+            });
+        };
+
+        EJS_onSaveSave = function(e) {
+            if (!apiUrl) return;
+            fetch(apiUrl + '/api/emu_save?game=' + encodeURIComponent(gameName) + '&type=sram', {
+                method: 'POST',
+                headers: saveHeaders,
+                body: e.save
+            }).then(function(r) { return r.json(); }).then(function(d) {
+                logMsg('info', 'SRAM synced: ' + (d.success ? 'OK (' + d.size + ' bytes)' : 'FAIL'));
+            }).catch(function(err) {
+                logMsg('err', 'Save SRAM failed: ' + err.message);
+            });
+        };
+
+        EJS_onLoadSave = function() {
+            if (!apiUrl) return;
+            fetch(apiUrl + '/api/emu_load?game=' + encodeURIComponent(gameName) + '&type=sram', {
+                headers: saveHeaders
+            }).then(function(r) {
+                if (!r.ok) { logMsg('info', 'No SRAM found'); return null; }
+                return r.arrayBuffer();
+            }).then(function(buf) {
+                if (buf && window.EJS_emulator) {
+                    var saveData = new Uint8Array(buf);
+                    window.EJS_emulator.gameManager.loadSaveFiles(saveData);
+                    logMsg('info', 'SRAM loaded from server');
+                }
+            }).catch(function(err) {
+                logMsg('err', 'Load SRAM failed: ' + err.message);
+            });
+        };
+
+        EJS_onGameStart = function() {
+            logMsg('info', 'Game started, loading saves from server...');
+            if (EJS_onLoadState) EJS_onLoadState();
+            if (EJS_onLoadSave) EJS_onLoadSave();
+        };
     </script>
 
     <script>
     (function() {
-        function logMsg(type, msg) {
+        window.logMsg = function logMsg(type, msg) {
             var time = new Date().toLocaleTimeString();
             var line = '[' + time + '] ' + msg;
             try {

@@ -540,9 +540,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const frame = document.getElementById('battleship-frame');
 
         const GAMES = [
-            { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
-            { title: 'Super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     },
-            { title: 'Nova the Squirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nes'     }
+            { title: 'Micro Machines', name: 'micromachines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
+            { title: 'Super',         name: 'super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     },
+            { title: 'Nova the Squirrel', name: 'novasquirrel', rom: 'roms/Nova the Squirrel/nova.nes',     core: 'nes'     }
         ];
 
         const html = `<!DOCTYPE html>
@@ -568,7 +568,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <body>
 <h2>\u{1F579}\uFE0F \u0412\u044B\u0431\u0435\u0440\u0438 \u0438\u0433\u0440\u0443</h2>
 <div class="list">
-${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}">
+${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}" data-name="${g.name}">
     <div class="icon">\u{1F3AE}</div>
     <div class="name">${g.title}</div>
 </div>`).join('')}
@@ -578,7 +578,9 @@ document.querySelectorAll('.item').forEach(function(el) {
     el.addEventListener('click', function() {
         var rom = el.getAttribute('data-rom');
         var core = el.getAttribute('data-core');
-        window.location.href = 'emulator.html?rom=' + encodeURIComponent(rom) + '&core=' + core;
+        var name = el.getAttribute('data-name');
+        var api = '${API_URL}';
+        window.location.href = 'emulator.html?rom=' + encodeURIComponent(rom) + '&core=' + core + '&name=' + name + '&api=' + encodeURIComponent(api);
     });
 });
 <\/script>
