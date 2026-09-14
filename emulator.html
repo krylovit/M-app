@@ -48,10 +48,56 @@
         EJS_cacheConfig = { enabled: false };
 
         EJS_onGameStart = function() {
-            logMsg('info', 'Game started (no save mode)');
+            logMsg('info', 'Game started');
+            if (apiUrl) {
+                fetch(apiUrl + '/api/emu_load?game=' + encodeURIComponent(gameName) + '&type=sram', { headers: saveHeaders })
+                    .then(function(r) { return r.ok ? r.arrayBuffer() : null; })
+                    .then(function(buf) {
+                        if (buf && buf.byteLength > 0) {
+                            try {
+                                var arr = new Uint8Array(buf);
+                                EJS_emulator.saveSaveFiles();
+                                EJS_emulator.loadSaveFiles({ 'sram': arr });
+                                logMsg('info', 'SRAM loaded: ' + arr.length + ' bytes');
+                            } catch(e) { logMsg('err', 'SRAM load error: ' + e.message); }
+                        }
+                    })
+                    .catch(function(e) { logMsg('err', 'SRAM load fetch error: ' + e.message); });
+            }
+        };
+        EJS_onSaveState = function(e) {
+            if (apiUrl && e.state) {
+                var data = new Uint8Array(e.state);
+                fetch(apiUrl + '/api/emu_save?game=' + encodeURIComponent(gameName) + '&type=state', {
+                    method: 'POST', headers: saveHeaders, body: data
+                }).then(function(r) { logMsg('info', 'Save state uploaded: ' + data.length + ' bytes'); })
+                  .catch(function(err) { logMsg('err', 'Save state error: ' + err.message); });
+            }
+        };
+        EJS_onLoadState = function(e) {
+            if (apiUrl) {
+                fetch(apiUrl + '/api/emu_load?game=' + encodeURIComponent(gameName) + '&type=state', { headers: saveHeaders })
+                    .then(function(r) { return r.ok ? r.arrayBuffer() : null; })
+                    .then(function(buf) {
+                        if (buf) {
+                            e.save(new Uint8Array(buf));
+                            logMsg('info', 'Save state loaded: ' + buf.byteLength + ' bytes');
+                        }
+                    })
+                    .catch(function(err) { logMsg('err', 'Load state error: ' + err.message); });
+            }
+        };
+        EJS_onSaveSave = function(e) {
+            if (apiUrl && e.sram) {
+                var data = new Uint8Array(e.sram);
+                fetch(apiUrl + '/api/emu_save?game=' + encodeURIComponent(gameName) + '&type=sram', {
+                    method: 'POST', headers: saveHeaders, body: data
+                }).then(function(r) { logMsg('info', 'SRAM saved: ' + data.length + ' bytes'); })
+                  .catch(function(err) { logMsg('err', 'SRAM save error: ' + err.message); });
+            }
         };
         EJS_onExit = function() {
-            logMsg('err', 'EJS_onExit fired - emulator closed itself');
+            logMsg('info', 'EJS_onExit fired');
         };
     </script>
 
@@ -108,7 +154,7 @@
         };
 
         logMsg('info', 'Emulator started: core=' + coreType + ' rom=' + romPath);
-        logMsg('info', 'BUILD: startButton-fix1');
+        logMsg('info', 'BUILD: saves-nestopia-1');
     })();
     </script>
     <script>
