@@ -35,7 +35,7 @@
         EJS_gameUrl = romPath;
         EJS_gameName = gameName;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
-        EJS_startOnLoaded = true;
+        EJS_startOnLoaded = false;
         EJS_VirtualGamepadSettings = [
             { type: 'zone', location: 'left', left: '50%', top: '50%', joystickInput: false, color: 'green', inputValues: [4, 5, 6, 7] },
             { type: 'button', text: 'B', id: 'b', location: 'right', left: 50, top: 50, bold: true, input_value: 0 },
@@ -108,7 +108,7 @@
         };
 
         logMsg('info', 'Emulator started: core=' + coreType + ' rom=' + romPath);
-        logMsg('info', 'BUILD: wakeLock-fix2');
+        logMsg('info', 'BUILD: startButton-fix1');
     })();
     </script>
     <script>
