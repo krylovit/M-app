@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+﻿document.addEventListener('DOMContentLoaded', function() {
 
     let tg = null;
     if (window.Telegram && window.Telegram.WebApp) {
@@ -244,6 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">РЕТРО</div>
                     <div class="game-card-stats">Приставка</div>
                 </div>
+                <div class="game-card" data-game="unity">
+                    <div class="game-card-icon">`u{1F3AE}</div>
+                    <div class="game-card-title">3D `u{418}`u{413}`u{420}`u{430}</div>
+                    <div class="game-card-stats">Unity WebGL</div>
+                </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
                     <div class="game-card-icon" style="opacity:0.4;">➕</div>
@@ -263,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'dungeon') openDungeonCrawl();
                 else if (game === 'cards') openHouseOfCards();
                 else if (game === 'retro') openRetroMenu();
+                else if (game === 'unity') openUnity();
             });
         });
         setupPlatformTabs();
@@ -519,6 +525,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const frame = document.getElementById('battleship-frame');
         container.querySelector('span').textContent = '🃏 Карты';
         frame.src = 'HouseOfCards-main/builds/house_of_cards.html';
+        container.style.display = 'block';
+    }
+
+    function openUnity() {
+        const container = document.getElementById('battleship-container');
+        const frame = document.getElementById('battleship-frame');
+        container.querySelector('span').textContent = 'u{1F3AE} 3D u{418}u{433}u{440}u{430}';
+        frame.src = 'unity/index.html';
         container.style.display = 'block';
     }
 
