@@ -239,15 +239,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">КАРТЫ</div>
                     <div class="game-card-stats">Рогалик</div>
                 </div>
-                <div class="game-card" data-game="retro">
-                    <div class="game-card-icon">🕹️</div>
-                    <div class="game-card-title">РЕТРО</div>
-                    <div class="game-card-stats">Приставка</div>
-                </div>
                 <div class="game-card" data-game="unity">
                     <div class="game-card-icon">🎮</div>
                     <div class="game-card-title">3D ИГРА</div>
                     <div class="game-card-stats">Unity WebGL</div>
+                </div>
+                <div class="game-card" data-game="unity_touch">
+                    <div class="game-card-icon">📱</div>
+                    <div class="game-card-title">3D ТАЧ</div>
+                    <div class="game-card-stats">Для телефона</div>
                 </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
@@ -267,8 +267,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'battleship') openBattleship();
                 else if (game === 'dungeon') openDungeonCrawl();
                 else if (game === 'cards') openHouseOfCards();
-                else if (game === 'retro') openRetroMenu();
                 else if (game === 'unity') openUnity();
+                else if (game === 'unity_touch') openUnityTouch();
             });
         });
         setupPlatformTabs();
@@ -507,89 +507,41 @@ document.addEventListener('DOMContentLoaded', function() {
     function openBattleship() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-
         frame.src = 'battleship/battleship.html';
-        container.style.display = 'block'; showCloseBtn();
+        container.style.display = 'block';
+        showCloseBtn();
     }
 
     function openDungeonCrawl() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-
         frame.src = 'html-dungeon-crawl-main/html_dungeon_crawl.html';
-        container.style.display = 'block'; showCloseBtn();
+        container.style.display = 'block';
+        showCloseBtn();
     }
 
     function openHouseOfCards() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-
         frame.src = 'HouseOfCards-main/builds/house_of_cards.html';
-        container.style.display = 'block'; showCloseBtn();
+        container.style.display = 'block';
+        showCloseBtn();
     }
 
     function openUnity() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-
         frame.src = 'unity/index.html';
-        container.style.display = 'block'; showCloseBtn();
+        container.style.display = 'block';
+        showCloseBtn();
     }
 
-    // ===== РЕТРО-ИГРЫ (ЭМУЛЯТОР) =====
-    function openRetroMenu() {
+    function openUnityTouch() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-
-
-        const GAMES = [
-            { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
-            { title: 'Super',         rom: 'roms/Super/Super.nes',                    core: 'nes'     }
-        ];
-
-        const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-    body { margin:0; background:#0f1b3d; color:#e0e6f0; font-family: sans-serif; padding:16px; }
-    h2 { color:#00d4ff; text-align:center; font-size:18px; margin:8px 0 16px; }
-    .list { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .item {
-        background:linear-gradient(145deg,#1a2a5c,#0f1b3d);
-        border:1px solid #00d4ff44; border-radius:12px;
-        padding:14px 8px; text-align:center; cursor:pointer;
-        transition: 0.2s; user-select:none;
-    }
-    .item:active { transform: scale(0.96); border-color:#00d4ff; }
-    .icon { font-size:28px; margin-bottom:6px; }
-    .name { font-size:12px; font-weight:600; }
-</style>
-</head>
-<body>
-<h2>🕹️ Выбери игру</h2>
-<div class="list">
-${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}">
-    <div class="icon">🎮</div>
-    <div class="name">${g.title}</div>
-</div>`).join('')}
-</div>
-<script>
-document.querySelectorAll('.item').forEach(function(el) {
-    el.addEventListener('click', function() {
-        var rom = el.getAttribute('data-rom');
-        var core = el.getAttribute('data-core');
-        window.location.href = 'emulator.html?rom=' + encodeURIComponent(rom) + '&core=' + core;
-    });
-});
-<\/script>
-</body>
-</html>`;
-
-        frame.src = 'about:blank';
-        frame.srcdoc = html;
-        container.style.display = 'block'; showCloseBtn();
+        frame.src = 'unity_touch/index.html';
+        container.style.display = 'block';
+        showCloseBtn();
     }
 
     // ===== КРЕСТИКИ-НОЛИКИ =====
