@@ -32,7 +32,13 @@
         EJS_gameUrl = romPath;
         EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
         EJS_startOnLoaded = true;
-        EJS_VirtualGamepadSettings = [];
+        EJS_VirtualGamepadSettings = [
+            { type: 'zone', location: 'left', left: '50%', top: '50%', joystickInput: true, color: 'blue', inputValues: [19, 18, 17, 16] },
+            { type: 'button', text: 'B', id: 'b', location: 'right', left: 50, top: 50, bold: true, input_value: 0 },
+            { type: 'button', text: 'A', id: 'a', location: 'right', left: 90, top: 10, bold: true, input_value: 8 },
+            { type: 'button', text: 'Select', id: 'select', location: 'center', left: -10, fontSize: 15, block: true, input_value: 2 },
+            { type: 'button', text: 'Start', id: 'start', location: 'center', left: 50, fontSize: 15, block: true, input_value: 3 }
+        ];
         EJS_language = 'en';
     </script>
     <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
