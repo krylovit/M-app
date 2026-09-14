@@ -17,10 +17,48 @@
             width: 100%;
             height: 100%;
         }
+        #debug-log {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            max-height: 40vh;
+            overflow-y: auto;
+            background: rgba(0,0,0,0.85);
+            color: #0f0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 6px 8px;
+            z-index: 99999;
+            border-bottom: 1px solid #333;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        #debug-log .err { color: #f44; }
+        #debug-log .warn { color: #fa0; }
+        #debug-log .info { color: #0f0; }
+        #debug-toggle {
+            position: fixed;
+            top: 2px;
+            right: 2px;
+            width: 24px;
+            height: 24px;
+            background: rgba(255,0,0,0.6);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            z-index: 100000;
+            cursor: pointer;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="game"></div>
+    <button id="debug-toggle" title="Показать лог">!</button>
+    <div id="debug-log"></div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -40,6 +78,75 @@
             { type: 'button', text: 'Start', id: 'start', location: 'center', left: 50, fontSize: 15, block: true, input_value: 3 }
         ];
         EJS_language = 'en';
+    </script>
+
+    <script>
+    (function() {
+        var logEl = document.getElementById('debug-log');
+        var toggleBtn = document.getElementById('debug-toggle');
+        var errors = [];
+        var hasErrors = false;
+
+        function logMsg(type, msg) {
+            var time = new Date().toLocaleTimeString();
+            var line = '[' + time + '] ' + msg;
+            errors.push({ type: type, msg: line });
+            if (type === 'err') {
+                hasErrors = true;
+                toggleBtn.style.display = 'block';
+                toggleBtn.style.background = 'rgba(255,0,0,0.9)';
+            }
+            if (logEl.style.display === 'block') {
+                var div = document.createElement('div');
+                div.className = type;
+                div.textContent = line;
+                logEl.appendChild(div);
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+            try {
+                window.parent.postMessage({ type: 'emuLog', logType: type, msg: line }, '*');
+            } catch(e) {}
+        }
+
+        window.addEventListener('error', function(e) {
+            logMsg('err', 'ERROR: ' + (e.message || 'unknown') + ' @ ' + (e.filename || '') + ':' + (e.lineno || '') + '\n' + (e.error && e.error.stack ? e.error.stack : ''));
+        });
+
+        window.addEventListener('unhandledrejection', function(e) {
+            logMsg('err', 'PROMISE REJECT: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason || 'unknown')));
+        });
+
+        toggleBtn.addEventListener('click', function() {
+            if (logEl.style.display === 'block') {
+                logEl.style.display = 'none';
+            } else {
+                logEl.style.display = 'block';
+                logEl.innerHTML = '';
+                errors.forEach(function(e) {
+                    var div = document.createElement('div');
+                    div.className = e.type;
+                    div.textContent = e.msg;
+                    logEl.appendChild(div);
+                });
+                logEl.scrollTop = logEl.scrollHeight;
+            }
+        });
+
+        console.error = function() {
+            var args = Array.prototype.slice.call(arguments).map(function(a) {
+                return typeof a === 'object' ? JSON.stringify(a) : String(a);
+            }).join(' ');
+            logMsg('err', 'console.error: ' + args);
+        };
+        console.warn = function() {
+            var args = Array.prototype.slice.call(arguments).map(function(a) {
+                return typeof a === 'object' ? JSON.stringify(a) : String(a);
+            }).join(' ');
+            logMsg('warn', 'console.warn: ' + args);
+        };
+
+        logMsg('info', 'Emulator started: core=' + coreType + ' rom=' + romPath);
+    })();
     </script>
     <script src="https://cdn.emulatorjs.org/stable/data/loader.js"></script>
 </body>
