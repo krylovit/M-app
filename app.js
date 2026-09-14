@@ -507,40 +507,40 @@ document.addEventListener('DOMContentLoaded', function() {
     function openBattleship() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = '⚓ Морской бой';
+
         frame.src = 'battleship/battleship.html';
-        container.style.display = 'block';
+        container.style.display = 'block'; showCloseBtn();
     }
 
     function openDungeonCrawl() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = '🐉 Подземелье';
+
         frame.src = 'html-dungeon-crawl-main/html_dungeon_crawl.html';
-        container.style.display = 'block';
+        container.style.display = 'block'; showCloseBtn();
     }
 
     function openHouseOfCards() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = '🃏 Карты';
+
         frame.src = 'HouseOfCards-main/builds/house_of_cards.html';
-        container.style.display = 'block';
+        container.style.display = 'block'; showCloseBtn();
     }
 
     function openUnity() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = 'u{1F3AE} 3D Иu{433}u{440}а';
+
         frame.src = 'unity/index.html';
-        container.style.display = 'block';
+        container.style.display = 'block'; showCloseBtn();
     }
 
     // ===== РЕТРО-ИГРЫ (ЭМУЛЯТОР) =====
     function openRetroMenu() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        container.querySelector('span').textContent = '🕹️ Ретро-игры';
+
 
         const GAMES = [
             { title: 'Micro Machines', rom: 'roms/Micro Machines/Micro Machines.gen', core: 'segaMD' },
@@ -589,7 +589,7 @@ document.querySelectorAll('.item').forEach(function(el) {
 
         frame.src = 'about:blank';
         frame.srcdoc = html;
-        container.style.display = 'block';
+        container.style.display = 'block'; showCloseBtn();
     }
 
     // ===== КРЕСТИКИ-НОЛИКИ =====
@@ -1320,8 +1320,26 @@ document.querySelectorAll('.item').forEach(function(el) {
         else { showMainMenu(); }
     });
 
-    document.getElementById('closeBattleshipBtn').addEventListener('click', function() {
+    var closeBtn = document.getElementById('closeBattleshipBtn');
+    var closeBtnTimer = null;
+    function showCloseBtn() {
+        closeBtn.style.opacity = '1';
+        closeBtn.style.pointerEvents = 'auto';
+        clearTimeout(closeBtnTimer);
+        closeBtnTimer = setTimeout(function() {
+            closeBtn.style.opacity = '0';
+            closeBtn.style.pointerEvents = 'none';
+        }, 3000);
+    }
+    closeBtn.addEventListener('click', function() {
         document.getElementById('battleship-container').style.display = 'none';
+        closeBtn.style.opacity = '1';
+        closeBtn.style.pointerEvents = 'auto';
+        clearTimeout(closeBtnTimer);
+    });
+    document.getElementById('battleship-container').addEventListener('click', function(e) {
+        if (e.target === closeBtn) return;
+        showCloseBtn();
     });
 
     function setupNavigation() {
