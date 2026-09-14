@@ -40,6 +40,7 @@
             { type: 'button', text: 'Start', id: 'start', location: 'center', left: 50, fontSize: 15, block: true, input_value: 3 }
         ];
         EJS_language = 'en';
+        EJS_disableLocalStorage = true;
     </script>
 
     <script>
@@ -57,7 +58,16 @@
         });
 
         window.addEventListener('unhandledrejection', function(e) {
-            logMsg('err', 'PROMISE REJECT: ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason || 'unknown')));
+            var reason = e.reason;
+            var detail = '';
+            if (reason && typeof reason === 'object') {
+                detail = reason.message || reason.name || '';
+                if (reason.stack) detail += '\n' + reason.stack;
+                try { detail += ' ' + JSON.stringify(reason); } catch(ex) {}
+            } else {
+                detail = String(reason || 'unknown');
+            }
+            logMsg('err', 'PROMISE REJECT: ' + detail);
         });
 
         var origError = console.error;
