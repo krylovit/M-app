@@ -1797,6 +1797,15 @@ document.querySelectorAll('.item').forEach(function(el) {
         if (e.target === closeBtn || e.target === fsBtn) return;
         showCloseBtn();
     });
+    document.addEventListener('fullscreenchange', function() {
+        if (document.getElementById('battleship-container').style.display !== 'none') showCloseBtn();
+    });
+    window.addEventListener('blur', function() {
+        if (document.activeElement && document.activeElement.id === 'battleship-frame'
+            && document.getElementById('battleship-container').style.display !== 'none') {
+            showCloseBtn();
+        }
+    });
 
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
