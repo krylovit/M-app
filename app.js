@@ -1757,24 +1757,44 @@ document.querySelectorAll('.item').forEach(function(el) {
     });
 
     var closeBtn = document.getElementById('closeBattleshipBtn');
+    var fsBtn = document.getElementById('fullscreenBtn');
     var closeBtnTimer = null;
     function showCloseBtn() {
         closeBtn.style.opacity = '1';
         closeBtn.style.pointerEvents = 'auto';
+        fsBtn.style.opacity = '1';
+        fsBtn.style.pointerEvents = 'auto';
         clearTimeout(closeBtnTimer);
         closeBtnTimer = setTimeout(function() {
             closeBtn.style.opacity = '0';
             closeBtn.style.pointerEvents = 'none';
+            fsBtn.style.opacity = '0';
+            fsBtn.style.pointerEvents = 'none';
         }, 3000);
     }
     closeBtn.addEventListener('click', function() {
+        if (document.fullscreenElement) { document.exitFullscreen(); }
         document.getElementById('battleship-container').style.display = 'none';
         closeBtn.style.opacity = '1';
         closeBtn.style.pointerEvents = 'auto';
+        fsBtn.style.opacity = '1';
+        fsBtn.style.pointerEvents = 'auto';
         clearTimeout(closeBtnTimer);
     });
+    fsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var container = document.getElementById('battleship-container');
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        } else if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+        }
+        showCloseBtn();
+    });
     document.getElementById('battleship-container').addEventListener('click', function(e) {
-        if (e.target === closeBtn) return;
+        if (e.target === closeBtn || e.target === fsBtn) return;
         showCloseBtn();
     });
 
