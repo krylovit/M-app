@@ -1808,16 +1808,81 @@ document.querySelectorAll('.item').forEach(function(el) {
     });
 
     // ===== РАДИО =====
+    let radioAudio = null;
+    let radioPlaying = false;
+    let radioTrackTimer = null;
+    const RADIO_STREAM = 'https://ice1.somafm.com/groovesalad-128-mp3';
+    const RADIO_TRACKS_API = 'https://somafm.com/songs/groovesalad.json';
+    const RADIO_STATION = 'SomaFM · Groove Salad';
+
     function showRadio() {
         currentView = 'radio';
         setBackBtnVisible(true);
         render(`
             <h2>📻 Радио</h2>
-            <div style="text-align:center; padding:40px 20px; color:var(--text-dim);">
-                <div style="font-size:64px; margin-bottom:16px;">📼</div>
-                <p>Экран радио — в разработке</p>
+            <div class="cassette ${radioPlaying ? 'playing' : ''}" id="cassette">
+                <div class="cassette-screw tl"></div>
+                <div class="cassette-screw tr"></div>
+                <div class="cassette-screw bl"></div>
+                <div class="cassette-screw br"></div>
+                <div class="cassette-led"></div>
+                <div class="cassette-label">
+                    <div class="cassette-brand">KAPITAN PIHLO · CHROME 90</div>
+                    <div class="cassette-window">
+                        <div class="reel"></div>
+                        <div class="reel"></div>
+                    </div>
+                    <div class="cassette-track" id="radioTrack">${RADIO_STATION}</div>
+                </div>
+                <div class="cassette-bottom"></div>
             </div>
+            <button class="action-btn" id="radioToggle">${radioPlaying ? '⏹ Стоп' : '▶ Играть'}</button>
+            <p style="text-align:center; font-size:12px; color:var(--text-dim); margin-top:10px;">${RADIO_STATION} · ambient/downtempo</p>
         `);
+        document.getElementById('radioToggle').addEventListener('click', toggleRadio);
+        if (radioPlaying) fetchRadioTrack();
+    }
+
+    function toggleRadio() {
+        if (!radioAudio) {
+            radioAudio = new Audio(RADIO_STREAM);
+            radioAudio.preload = 'none';
+        }
+        const cassette = document.getElementById('cassette');
+        const btn = document.getElementById('radioToggle');
+        if (radioPlaying) {
+            radioAudio.pause();
+            radioPlaying = false;
+            stopRadioTrackPolling();
+            if (cassette) cassette.classList.remove('playing');
+            if (btn) btn.textContent = '▶ Играть';
+        } else {
+            radioAudio.play().catch(e => console.warn('radio play failed', e));
+            radioPlaying = true;
+            startRadioTrackPolling();
+            if (cassette) cassette.classList.add('playing');
+            if (btn) btn.textContent = '⏹ Стоп';
+        }
+    }
+
+    async function fetchRadioTrack() {
+        try {
+            const r = await fetch(RADIO_TRACKS_API);
+            const d = await r.json();
+            const s = d.songs && d.songs[0];
+            const el = document.getElementById('radioTrack');
+            if (s && el) el.textContent = `${s.artist} — ${s.title}`;
+        } catch (e) { /* оставляем название станции */ }
+    }
+
+    function startRadioTrackPolling() {
+        stopRadioTrackPolling();
+        fetchRadioTrack();
+        radioTrackTimer = setInterval(fetchRadioTrack, 30000);
+    }
+
+    function stopRadioTrackPolling() {
+        if (radioTrackTimer) { clearInterval(radioTrackTimer); radioTrackTimer = null; }
     }
 
     function setupNavigation() {

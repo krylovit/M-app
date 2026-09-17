@@ -1178,3 +1178,145 @@ nav button.nav-games:active {
 .bs-board-section .bs-grid {
     margin: 0 auto;
 }
+/* =====  / ССТ ===== */
+.cassette {
+    position: relative;
+    width: 100%;
+    max-width: 340px;
+    aspect-ratio: 100 / 64;
+    margin: 6px auto 18px;
+    background: linear-gradient(160deg, #252e50 0%, #151c38 55%, #0e1430 100%);
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: box-shadow 0.4s;
+}
+.cassette.playing {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 28px rgba(0, 212, 255, 0.3);
+}
+
+.cassette-screw {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #4a5578, #1a2140);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+.cassette-screw::after {
+    content: '';
+    position: absolute;
+    left: 15%; right: 15%; top: 44%;
+    height: 1.5px;
+    background: #0a0e27;
+    transform: rotate(45deg);
+}
+.cassette-screw.tl { top: 4px; left: 4px; }
+.cassette-screw.tr { top: 4px; right: 4px; }
+.cassette-screw.bl { bottom: 4px; left: 4px; }
+.cassette-screw.br { bottom: 4px; right: 4px; }
+
+.cassette-led {
+    position: absolute;
+    top: 6px; right: 18px;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #2a3050;
+    transition: all 0.3s;
+}
+.cassette.playing .cassette-led {
+    background: var(--accent-pink);
+    box-shadow: 0 0 8px var(--accent-pink);
+}
+
+.cassette-label {
+    position: absolute;
+    left: 6%; right: 6%; top: 9%;
+    height: 60%;
+    background: linear-gradient(180deg, #e9e5d9 0%, #d8d3c2 100%);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 2.5% 4%;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.cassette-brand {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #a04030;
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.cassette-window {
+    flex: 1;
+    margin: 4% 6%;
+    background: rgba(12, 17, 36, 0.88);
+    border-radius: 5px;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 9%;
+    position: relative;
+    overflow: hidden;
+}
+
+.cassette-window::before {
+    content: '';
+    position: absolute;
+    left: 10%; right: 10%; top: 50%;
+    height: 3px;
+    background: #241a12;
+    transform: translateY(-50%);
+    opacity: 0.9;
+}
+
+.reel {
+    width: 30%;
+    max-width: 52px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: repeating-conic-gradient(#dfe3ee 0deg 22deg, #8b94b8 22deg 45deg, #dfe3ee 45deg 60deg);
+    border: 3px solid #0d1226;
+    position: relative;
+    z-index: 1;
+}
+.reel::after {
+    content: '';
+    position: absolute;
+    inset: 30%;
+    border-radius: 50%;
+    background: #0d1226;
+    box-shadow: 0 0 0 2px #3a4266;
+}
+.cassette.playing .reel {
+    animation: reelspin 2.4s linear infinite;
+}
+@keyframes reelspin {
+    to { transform: rotate(360deg); }
+}
+
+.cassette-track {
+    font-size: 11px;
+    font-weight: 600;
+    color: #2a3050;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 15px;
+    padding-top: 2px;
+}
+
+.cassette-bottom {
+    position: absolute;
+    left: 20%; right: 20%; bottom: 0;
+    height: 17%;
+    background: #0a0f22;
+    clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
+}
