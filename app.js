@@ -1828,6 +1828,7 @@ document.querySelectorAll('.item').forEach(function(el) {
     let radioTrackIdx = 0;
     let radioTypeToken = 0;
     let radioTypedLabel = '';
+    let radioVolume = 1;
 
     function radioTrackLabel(t) {
         if (!t) return '—';
@@ -1838,7 +1839,11 @@ document.querySelectorAll('.item').forEach(function(el) {
         currentView = 'radio';
         setBackBtnVisible(true);
         render(`
-            <h2>📻 Магнитофон</h2>
+            <div class="vol-row">
+                <span class="vol-ico">🔈</span>
+                <input type="range" id="radioVol" class="vol-slider" min="0" max="100" value="${Math.round(radioVolume * 100)}">
+                <span class="vol-ico">🔊</span>
+            </div>
             <div class="cassette ${radioPlaying ? 'playing' : ''}" id="cassette">
                 <div class="cassette-screw tl"></div>
                 <div class="cassette-screw tr"></div>
@@ -1858,15 +1863,21 @@ document.querySelectorAll('.item').forEach(function(el) {
                 <div class="cassette-bottom"></div>
             </div>
             <div class="radio-controls">
-                <button class="radio-btn" id="radioPrev">⏮</button>
-                <button class="radio-btn radio-btn-main" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
-                <button class="radio-btn" id="radioNext">⏭</button>
+                <button class="deck-btn" id="radioPrev">⏮</button>
+                <button class="deck-btn deck-play" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
+                <button class="deck-btn" id="radioNext">⏭</button>
             </div>
             <p class="radio-counter" id="radioCounter"></p>
         `);
         document.getElementById('radioToggle').addEventListener('click', toggleRadio);
         document.getElementById('radioPrev').addEventListener('click', () => radioSkip(-1));
         document.getElementById('radioNext').addEventListener('click', () => radioSkip(1));
+        const vol = document.getElementById('radioVol');
+        if (vol) vol.addEventListener('input', () => {
+            radioVolume = vol.value / 100;
+            if (radioAudio) radioAudio.volume = radioVolume;
+            vol.style.setProperty('--val', vol.value + '%');
+        });
         loadRadioPlaylist();
     }
 
@@ -1899,6 +1910,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         radioTrackIdx = ((idx % radioPlaylist.length) + radioPlaylist.length) % radioPlaylist.length;
         const t = radioPlaylist[radioTrackIdx];
         if (!radioAudio) radioAudio = new Audio();
+        radioAudio.volume = radioVolume;
         radioAudio.src = `${MUSIC_URL}/${encodeURIComponent(t.file)}`;
         radioAudio.onended = () => radioSkip(1);
         radioAudio.ontimeupdate = () => {
