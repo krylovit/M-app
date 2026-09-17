@@ -229,30 +229,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-title">ШАШКИ</div>
                     <div class="game-card-stats">Играй с другом</div>
                 </div>
-                <div class="game-card" data-game="dungeon">
-                    <div class="game-card-icon">🐉</div>
-                    <div class="game-card-title">ПОДЗЕМЕЛЬЕ</div>
-                    <div class="game-card-stats">Рогалик</div>
-                </div>
-                <div class="game-card" data-game="cards">
-                    <div class="game-card-icon">🃏</div>
-                    <div class="game-card-title">КАРТЫ</div>
-                    <div class="game-card-stats">Рогалик</div>
-                </div>
                 <div class="game-card" data-game="retro">
                     <div class="game-card-icon">🕹️</div>
                     <div class="game-card-title">РЕТРО</div>
                     <div class="game-card-stats">Эмулятор</div>
                 </div>
-                <div class="game-card" data-game="unity">
-                    <div class="game-card-icon">🎮</div>
+                <div class="game-card" data-game="game3d">
+                    <div class="game-card-icon"><img src="img/game3d.jpg" alt="3D" style="width:48px;height:48px;border-radius:10px;object-fit:cover;" onerror="this.outerHTML='🎮'"></div>
                     <div class="game-card-title">3D ИГРА</div>
                     <div class="game-card-stats">Unity WebGL</div>
-                </div>
-                <div class="game-card" data-game="unity_touch">
-                    <div class="game-card-icon">📱</div>
-                    <div class="game-card-title">3D ТАЧ</div>
-                    <div class="game-card-stats">Для телефона</div>
                 </div>
                 <div class="game-card disabled">
                     <div class="game-card-badge">Скоро</div>
@@ -270,11 +255,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 else if (game === 'c4') { currentView = 'game_c4'; showConnectFour(); }
                 else if (game === 'checkers') { currentView = 'game_checkers'; showCheckers(); }
                 else if (game === 'battleship') { currentView = 'game_battleship'; showBattleshipLobby(); }
-                else if (game === 'dungeon') openDungeonCrawl();
-                else if (game === 'cards') openHouseOfCards();
                 else if (game === 'retro') openRetroMenu();
-                else if (game === 'unity') openUnity();
-                else if (game === 'unity_touch') openUnityTouch();
+                else if (game === 'game3d') openGame3d();
             });
         });
         setupPlatformTabs();
@@ -596,34 +578,10 @@ document.querySelectorAll('.item').forEach(function(el) {
         showCloseBtn();
     }
 
-    function openDungeonCrawl() {
+    function openGame3d() {
         const container = document.getElementById('battleship-container');
         const frame = document.getElementById('battleship-frame');
-        frame.src = 'html-dungeon-crawl-main/html_dungeon_crawl.html';
-        container.style.display = 'block';
-        showCloseBtn();
-    }
-
-    function openHouseOfCards() {
-        const container = document.getElementById('battleship-container');
-        const frame = document.getElementById('battleship-frame');
-        frame.src = 'HouseOfCards-main/builds/house_of_cards.html';
-        container.style.display = 'block';
-        showCloseBtn();
-    }
-
-    function openUnity() {
-        const container = document.getElementById('battleship-container');
-        const frame = document.getElementById('battleship-frame');
-        frame.src = 'unity/index.html';
-        container.style.display = 'block';
-        showCloseBtn();
-    }
-
-    function openUnityTouch() {
-        const container = document.getElementById('battleship-container');
-        const frame = document.getElementById('battleship-frame');
-        frame.src = 'unity_touch/index.html';
+        frame.src = 'https://kapitanpiho.duckdns.org/game3d/';
         container.style.display = 'block';
         showCloseBtn();
     }
