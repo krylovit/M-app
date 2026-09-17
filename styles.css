@@ -1285,42 +1285,52 @@ nav button.nav-games:active {
 
 .cassette-window {
     flex: 1 1 auto;
-    min-height: 44px;
-    margin: 4px 8px;
-    background: rgba(12, 17, 36, 0.88);
-    border-radius: 5px;
-    border: 1px solid rgba(0, 0, 0, 0.4);
+    min-height: 48px;
+    margin: 3px 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 13%;
+    gap: 8px;
+}
+
+.porthole {
     position: relative;
+    flex: 0 0 auto;
+    height: 100%;
+    aspect-ratio: 1.2 / 1;
+    background: linear-gradient(180deg, #10131c, #1a1e2a);
+    border-radius: 26% / 44%;
+    border: 2px solid #262b3a;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
 }
 
-.cassette-window::before {
-    content: '';
-    position: absolute;
-    left: 10%; right: 10%; top: 50%;
-    height: 5px;
-    background: linear-gradient(180deg, #4a3520, #2a1d10);
-    transform: translateY(-50%);
-    opacity: 0.95;
+.meter {
+    flex: 1 1 auto;
+    max-width: 72px;
+    height: 60%;
+    background: linear-gradient(180deg, #3a2410, #241505);
+    border-radius: 3px;
+    border: 1px solid #0d0902;
+    box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 .reel {
-    height: 62%;
+    height: 56%;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     border-radius: 50%;
     background: repeating-conic-gradient(#dfe3ee 0deg 22deg, #8b94b8 22deg 45deg, #dfe3ee 45deg 60deg);
-    border: 3px solid #0d1226;
+    border: 2px solid #0d1226;
     position: relative;
     z-index: 1;
 }
 .reel-wrap {
     position: relative;
-    height: 110%;
+    height: 100%;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     display: flex;
@@ -1329,15 +1339,15 @@ nav button.nav-games:active {
 }
 .tape {
     position: absolute;
-    inset: 0;
+    inset: 5%;
     border-radius: 50%;
-    background: repeating-radial-gradient(circle at center, #170e04 0 2px, #2e1f0c 2px 4px);
-    box-shadow: 0 0 0 1px #0d0802;
+    background: repeating-radial-gradient(circle at center, #4b4136 0 2px, #332a1e 2px 4px);
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.6);
 }
 .reel::after {
     content: '';
     position: absolute;
-    inset: 30%;
+    inset: 38%;
     border-radius: 50%;
     background: #0d1226;
     box-shadow: 0 0 0 2px #3a4266;
