@@ -181,19 +181,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function dosSleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
     async function dosBoot() {
-        const el = document.getElementById('content');
-        if (!el) return;
+        const term = document.getElementById('dosTerm');
+        if (!term) return;
         const joke = DOS_JOKES[Math.floor(Math.random() * DOS_JOKES.length)];
         const lines = [
-            'C:\\> KAPITAN.EXE',
+            'KAPITAN BIOS v1.12',
             'Проверка памяти.......... 640K OK',
             'Драйвер мыши............. OK',
             'Звуковая карта........... OK',
+            'C:\\> KAPITAN.EXE',
             'Загрузка помощника....... ',
         ];
         let out = '';
-        el.innerHTML = '<div class="dos-terminal" id="dosTerm"></div>';
-        const term = document.getElementById('dosTerm');
         for (const line of lines) {
             out += line + '\n';
             term.innerHTML = out + '<span class="dos-cursor"></span>';
@@ -210,6 +209,13 @@ document.addEventListener('DOMContentLoaded', function() {
         await dosSleep(300);
         out += joke + '\nC:\\> ';
         term.innerHTML = out + '<span class="dos-cursor"></span>';
+    }
+
+    function dosSplashHide() {
+        const s = document.getElementById('dos-splash');
+        if (!s) return;
+        s.classList.add('fade');
+        setTimeout(() => { s.style.display = 'none'; }, 750);
     }
 
     function showMainMenu() {
@@ -1948,6 +1954,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         await fetchAllData();
         await boot;
         showMainMenu();
+        dosSplashHide();
     }
     init();
 });

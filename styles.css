@@ -1392,3 +1392,33 @@ nav button.nav-games:active {
     50%, 100% { opacity: 0; }
 }
 .dos-dim { color: rgba(255, 170, 0, 0.55); }
+
+/* ===== DOS СПЛЭШ (заставка на весь экран) ===== */
+#dos-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: #03050f;
+    padding: 22px 18px;
+    overflow: hidden;
+    transition: opacity 0.7s ease;
+}
+#dos-splash.fade {
+    opacity: 0;
+    pointer-events: none;
+}
+#dos-splash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px);
+}
+#dos-splash .dos-terminal {
+    border: none;
+    background: transparent;
+    min-height: 0;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1.9;
+}
