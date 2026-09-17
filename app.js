@@ -1810,14 +1810,18 @@ document.querySelectorAll('.item').forEach(function(el) {
     // ===== РАДИО =====
     let radioAudio = null;
     let radioPlaying = false;
-    let radioTrackTimer = null;
-    const RADIO_STREAM = 'https://ice1.somafm.com/groovesalad-128-mp3';
-    const RADIO_TRACKS_API = 'https://somafm.com/songs/groovesalad.json';
-    const RADIO_STATION = 'SomaFM · Groove Salad';
+    let radioPlaylist = [];
+    let radioTrackIdx = 0;
+
+    function radioTrackLabel(t) {
+        if (!t) return '—';
+        return t.artist ? `${t.artist} — ${t.title}` : t.title;
+    }
 
     function showRadio() {
         currentView = 'radio';
         setBackBtnVisible(true);
+        const cur = radioPlaylist[radioTrackIdx];
         render(`
             <h2>📻 Радио</h2>
             <div class="cassette ${radioPlaying ? 'playing' : ''}" id="cassette">
@@ -1832,57 +1836,96 @@ document.querySelectorAll('.item').forEach(function(el) {
                         <div class="reel"></div>
                         <div class="reel"></div>
                     </div>
-                    <div class="cassette-track" id="radioTrack">${RADIO_STATION}</div>
+                    <div class="cassette-track" id="radioTrack">${radioTrackLabel(cur)}</div>
                 </div>
                 <div class="cassette-bottom"></div>
             </div>
-            <button class="action-btn" id="radioToggle">${radioPlaying ? '⏹ Стоп' : '▶ Играть'}</button>
-            <p style="text-align:center; font-size:12px; color:var(--text-dim); margin-top:10px;">${RADIO_STATION} · ambient/downtempo</p>
+            <div class="radio-controls">
+                <button class="radio-btn" id="radioPrev">⏮</button>
+                <button class="radio-btn radio-btn-main" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
+                <button class="radio-btn" id="radioNext">⏭</button>
+            </div>
+            <div class="radio-playlist" id="radioPlaylist"><p style="text-align:center; color:var(--text-dim);">Загрузка плейлиста...</p></div>
         `);
         document.getElementById('radioToggle').addEventListener('click', toggleRadio);
-        if (radioPlaying) fetchRadioTrack();
+        document.getElementById('radioPrev').addEventListener('click', () => radioSkip(-1));
+        document.getElementById('radioNext').addEventListener('click', () => radioSkip(1));
+        loadRadioPlaylist();
+    }
+
+    async function loadRadioPlaylist() {
+        const box = document.getElementById('radioPlaylist');
+        try {
+            const r = await fetch(`${API_URL}/api/music/list`, { headers: HEADERS });
+            const d = await r.json();
+            if (d.success && d.tracks && d.tracks.length) {
+                radioPlaylist = d.tracks;
+                renderRadioPlaylist();
+                const el = document.getElementById('radioTrack');
+                if (el && !radioPlaying) el.textContent = radioTrackLabel(radioPlaylist[radioTrackIdx]);
+            } else {
+                if (box) box.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Плейлист пуст — положи MP3 в папку music/</p>';
+            }
+        } catch (e) {
+            if (box) box.innerHTML = '<p style="text-align:center; color:var(--accent-pink);">Не удалось загрузить плейлист</p>';
+        }
+    }
+
+    function renderRadioPlaylist() {
+        const box = document.getElementById('radioPlaylist');
+        if (!box) return;
+        box.innerHTML = radioPlaylist.map((t, i) => `
+            <div class="radio-track ${i === radioTrackIdx ? 'active' : ''}" data-idx="${i}">
+                <span class="radio-track-num">${i + 1}</span>
+                <span class="radio-track-name">${escapeHtml(radioTrackLabel(t))}</span>
+                ${i === radioTrackIdx && radioPlaying ? '<span class="radio-track-eq">♪</span>' : ''}
+            </div>
+        `).join('');
+        box.querySelectorAll('.radio-track').forEach(el => {
+            el.addEventListener('click', function() {
+                radioPlayTrack(parseInt(this.getAttribute('data-idx'), 10));
+            });
+        });
+    }
+
+    function radioPlayTrack(idx) {
+        if (!radioPlaylist.length) return;
+        radioTrackIdx = ((idx % radioPlaylist.length) + radioPlaylist.length) % radioPlaylist.length;
+        const t = radioPlaylist[radioTrackIdx];
+        if (!radioAudio) radioAudio = new Audio();
+        radioAudio.src = `${API_URL}/api/music/file/${encodeURIComponent(t.file)}`;
+        radioAudio.play().catch(e => console.warn('radio play failed', e));
+        radioAudio.onended = () => radioSkip(1);
+        radioPlaying = true;
+        updateRadioUI();
     }
 
     function toggleRadio() {
-        if (!radioAudio) {
-            radioAudio = new Audio(RADIO_STREAM);
-            radioAudio.preload = 'none';
-        }
-        const cassette = document.getElementById('cassette');
-        const btn = document.getElementById('radioToggle');
+        if (!radioPlaylist.length) return;
         if (radioPlaying) {
-            radioAudio.pause();
+            if (radioAudio) radioAudio.pause();
             radioPlaying = false;
-            stopRadioTrackPolling();
-            if (cassette) cassette.classList.remove('playing');
-            if (btn) btn.textContent = '▶ Играть';
         } else {
+            if (!radioAudio || !radioAudio.src) { radioPlayTrack(radioTrackIdx); return; }
             radioAudio.play().catch(e => console.warn('radio play failed', e));
             radioPlaying = true;
-            startRadioTrackPolling();
-            if (cassette) cassette.classList.add('playing');
-            if (btn) btn.textContent = '⏹ Стоп';
         }
+        updateRadioUI();
     }
 
-    async function fetchRadioTrack() {
-        try {
-            const r = await fetch(RADIO_TRACKS_API);
-            const d = await r.json();
-            const s = d.songs && d.songs[0];
-            const el = document.getElementById('radioTrack');
-            if (s && el) el.textContent = `${s.artist} — ${s.title}`;
-        } catch (e) { /* оставляем название станции */ }
+    function radioSkip(dir) {
+        if (!radioPlaylist.length) return;
+        radioPlayTrack(radioTrackIdx + dir);
     }
 
-    function startRadioTrackPolling() {
-        stopRadioTrackPolling();
-        fetchRadioTrack();
-        radioTrackTimer = setInterval(fetchRadioTrack, 30000);
-    }
-
-    function stopRadioTrackPolling() {
-        if (radioTrackTimer) { clearInterval(radioTrackTimer); radioTrackTimer = null; }
+    function updateRadioUI() {
+        const cassette = document.getElementById('cassette');
+        const btn = document.getElementById('radioToggle');
+        const track = document.getElementById('radioTrack');
+        if (cassette) cassette.classList.toggle('playing', radioPlaying);
+        if (btn) btn.textContent = radioPlaying ? '⏹' : '▶';
+        if (track) track.textContent = radioTrackLabel(radioPlaylist[radioTrackIdx]);
+        renderRadioPlaylist();
     }
 
     function setupNavigation() {
