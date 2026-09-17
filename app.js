@@ -1853,7 +1853,6 @@ document.querySelectorAll('.item').forEach(function(el) {
                         <div class="reel" id="reelL"></div>
                         <div class="reel" id="reelR"></div>
                     </div>
-                    <div class="cassette-stripes"></div>
                     <div class="cassette-track" id="radioTrack"></div>
                 </div>
                 <div class="cassette-bottom"></div>

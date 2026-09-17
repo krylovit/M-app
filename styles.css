@@ -1249,16 +1249,6 @@ nav button.nav-games:active {
     padding: 2.5% 4%;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.25);
 }
-.cassette-label::after {
-    content: '60';
-    position: absolute;
-    right: 4%; bottom: 2%;
-    font-family: 'Orbitron', monospace;
-    font-size: 26px;
-    font-weight: 900;
-    color: rgba(216, 207, 180, 0.12);
-    pointer-events: none;
-}
 
 .cassette-brand {
     font-family: 'Orbitron', monospace;
@@ -1283,13 +1273,14 @@ nav button.nav-games:active {
 }
 
 .cassette-stripes {
-    height: 7px;
-    margin: 1px 2%;
-    background: repeating-linear-gradient(0deg, rgba(216, 207, 180, 0.5) 0 1px, transparent 1px 2.5px);
+    height: 1px;
+    margin: 2px 2%;
+    background: rgba(216, 207, 180, 0.45);
 }
 
 .cassette-window {
-    flex: 1;
+    flex: 1 0 auto;
+    min-height: 46px;
     margin: 4% 6%;
     background: rgba(12, 17, 36, 0.88);
     border-radius: 5px;
@@ -1313,9 +1304,9 @@ nav button.nav-games:active {
 }
 
 .reel {
-    width: 30%;
-    max-width: 52px;
-    aspect-ratio: 1;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
     border-radius: 50%;
     background: repeating-conic-gradient(#dfe3ee 0deg 22deg, #8b94b8 22deg 45deg, #dfe3ee 45deg 60deg);
     border: 3px solid #0d1226;
