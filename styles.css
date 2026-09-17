@@ -1321,7 +1321,7 @@ nav button.nav-games:active {
     clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
 }
 
-/* ===== : ТЫ  СТ ===== */
+/* ===== РАДИО: КОНТРОЛЫ ===== */
 .radio-controls {
     display: flex;
     justify-content: center;
@@ -1350,51 +1350,11 @@ nav button.nav-games:active {
     color: var(--accent-blue);
 }
 
-.radio-playlist {
-    max-width: 400px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-.radio-track {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 8px;
-    background: var(--bg-card);
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-.radio-track:hover {
-    background: var(--bg-card-hover);
-    border-color: var(--border-subtle);
-}
-.radio-track.active {
-    border-color: var(--border-active);
-    background: rgba(0, 212, 255, 0.08);
-}
-.radio-track-num {
+.radio-counter {
+    text-align: center;
     font-size: 11px;
     color: var(--text-dim);
-    min-width: 18px;
     font-family: 'Orbitron', monospace;
-}
-.radio-track-name {
-    flex: 1;
-    font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.radio-track-eq {
-    color: var(--accent-green);
-    font-size: 14px;
-    animation: eqblink 1s ease-in-out infinite;
-}
-@keyframes eqblink {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 1; }
+    letter-spacing: 1px;
+    margin: 0;
 }

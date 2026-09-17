@@ -1845,7 +1845,7 @@ document.querySelectorAll('.item').forEach(function(el) {
                 <button class="radio-btn radio-btn-main" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
                 <button class="radio-btn" id="radioNext">⏭</button>
             </div>
-            <div class="radio-playlist" id="radioPlaylist"><p style="text-align:center; color:var(--text-dim);">Загрузка плейлиста...</p></div>
+            <p class="radio-counter" id="radioCounter"></p>
         `);
         document.getElementById('radioToggle').addEventListener('click', toggleRadio);
         document.getElementById('radioPrev').addEventListener('click', () => radioSkip(-1));
@@ -1854,38 +1854,20 @@ document.querySelectorAll('.item').forEach(function(el) {
     }
 
     async function loadRadioPlaylist() {
-        const box = document.getElementById('radioPlaylist');
         try {
             const r = await fetch(`${API_URL}/api/music/list`, { headers: HEADERS });
             const d = await r.json();
             if (d.success && d.tracks && d.tracks.length) {
                 radioPlaylist = d.tracks;
-                renderRadioPlaylist();
-                const el = document.getElementById('radioTrack');
-                if (el && !radioPlaying) el.textContent = radioTrackLabel(radioPlaylist[radioTrackIdx]);
+                updateRadioUI();
             } else {
-                if (box) box.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Плейлист пуст — положи MP3 в папку music/</p>';
+                const el = document.getElementById('radioTrack');
+                if (el) el.textContent = 'Плейлист пуст';
             }
         } catch (e) {
-            if (box) box.innerHTML = '<p style="text-align:center; color:var(--accent-pink);">Не удалось загрузить плейлист</p>';
+            const el = document.getElementById('radioTrack');
+            if (el) el.textContent = 'Нет связи с сервером';
         }
-    }
-
-    function renderRadioPlaylist() {
-        const box = document.getElementById('radioPlaylist');
-        if (!box) return;
-        box.innerHTML = radioPlaylist.map((t, i) => `
-            <div class="radio-track ${i === radioTrackIdx ? 'active' : ''}" data-idx="${i}">
-                <span class="radio-track-num">${i + 1}</span>
-                <span class="radio-track-name">${escapeHtml(radioTrackLabel(t))}</span>
-                ${i === radioTrackIdx && radioPlaying ? '<span class="radio-track-eq">♪</span>' : ''}
-            </div>
-        `).join('');
-        box.querySelectorAll('.radio-track').forEach(el => {
-            el.addEventListener('click', function() {
-                radioPlayTrack(parseInt(this.getAttribute('data-idx'), 10));
-            });
-        });
     }
 
     function radioPlayTrack(idx) {
@@ -1925,7 +1907,8 @@ document.querySelectorAll('.item').forEach(function(el) {
         if (cassette) cassette.classList.toggle('playing', radioPlaying);
         if (btn) btn.textContent = radioPlaying ? '⏹' : '▶';
         if (track) track.textContent = radioTrackLabel(radioPlaylist[radioTrackIdx]);
-        renderRadioPlaylist();
+        const counter = document.getElementById('radioCounter');
+        if (counter) counter.textContent = radioPlaylist.length ? `трек ${radioTrackIdx + 1} / ${radioPlaylist.length}` : '';
     }
 
     function setupNavigation() {
