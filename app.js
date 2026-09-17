@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
         tg = { ready: function() {}, expand: function() {}, initDataUnsafe: { user: { id: 488036257, username: 'Krylovit', photo_url: '' } } };
     }
 
-    const API_URL = 'https://puma-suction-anteater.ngrok-free.dev';
-    const HEADERS = { 'ngrok-skip-browser-warning': 'true' };
+    const API_URL = 'https://kapitanpiho.duckdns.org';
+    const HEADERS = {};
 
     const MOUSE_ANIMATIONS = [
         'animations/mouse-scroll.json',
