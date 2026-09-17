@@ -1838,6 +1838,7 @@ document.querySelectorAll('.item').forEach(function(el) {
     function showRadio() {
         currentView = 'radio';
         setBackBtnVisible(true);
+        radioTypedLabel = '';
         render(`
             <div class="vol-row">
                 <span class="vol-ico">🔈</span>
@@ -1867,7 +1868,6 @@ document.querySelectorAll('.item').forEach(function(el) {
                 <button class="deck-btn${radioPlaying ? ' lit' : ''}" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
                 <button class="deck-btn" id="radioNext">⏭</button>
             </div>
-            <p class="radio-counter" id="radioCounter"></p>
         `);
         document.getElementById('radioToggle').addEventListener('click', toggleRadio);
         document.getElementById('radioPrev').addEventListener('click', () => radioSkip(-1));
@@ -1964,8 +1964,6 @@ document.querySelectorAll('.item').forEach(function(el) {
             radioTypedLabel = label;
             radioTypeText(track, label);
         }
-        const counter = document.getElementById('radioCounter');
-        if (counter) counter.textContent = radioPlaylist.length ? `трек ${radioTrackIdx + 1} / ${radioPlaylist.length}` : '';
     }
 
     function setupNavigation() {

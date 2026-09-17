@@ -1183,7 +1183,7 @@ nav button.nav-games:active {
     position: relative;
     width: 100%;
     max-width: 340px;
-    aspect-ratio: 100 / 64;
+    aspect-ratio: 100 / 70;
     margin: 6px auto 18px;
     background: linear-gradient(160deg, #f2ead6 0%, #e3d9bf 55%, #d3c7a8 100%);
     border-radius: 10px;
@@ -1240,8 +1240,8 @@ nav button.nav-games:active {
 
 .cassette-label {
     position: absolute;
-    left: 6%; right: 6%; top: 9%;
-    height: 60%;
+    left: 6%; right: 6%; top: 8%;
+    height: 68%;
     background: linear-gradient(180deg, #24272e 0%, #14161c 100%);
     border-radius: 6px;
     display: flex;
