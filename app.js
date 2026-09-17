@@ -1723,12 +1723,6 @@ document.querySelectorAll('.item').forEach(function(el) {
         fsBtn.style.opacity = '1';
         fsBtn.style.pointerEvents = 'auto';
         clearTimeout(closeBtnTimer);
-        closeBtnTimer = setTimeout(function() {
-            closeBtn.style.opacity = '0';
-            closeBtn.style.pointerEvents = 'none';
-            fsBtn.style.opacity = '0';
-            fsBtn.style.pointerEvents = 'none';
-        }, 3000);
     }
     closeBtn.addEventListener('click', function() {
         if (document.fullscreenElement) { document.exitFullscreen(); }
@@ -1781,7 +1775,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         setBackBtnVisible(true);
         const cur = radioPlaylist[radioTrackIdx];
         render(`
-            <h2>📻 Радио</h2>
+            <h2>📻 Магнитофон</h2>
             <div class="cassette ${radioPlaying ? 'playing' : ''}" id="cassette">
                 <div class="cassette-screw tl"></div>
                 <div class="cassette-screw tr"></div>
