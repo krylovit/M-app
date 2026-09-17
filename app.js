@@ -1864,7 +1864,7 @@ document.querySelectorAll('.item').forEach(function(el) {
             </div>
             <div class="radio-controls">
                 <button class="deck-btn" id="radioPrev">⏮</button>
-                <button class="deck-btn deck-play" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
+                <button class="deck-btn${radioPlaying ? ' lit' : ''}" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
                 <button class="deck-btn" id="radioNext">⏭</button>
             </div>
             <p class="radio-counter" id="radioCounter"></p>
@@ -1913,15 +1913,6 @@ document.querySelectorAll('.item').forEach(function(el) {
         radioAudio.volume = radioVolume;
         radioAudio.src = `${MUSIC_URL}/${encodeURIComponent(t.file)}`;
         radioAudio.onended = () => radioSkip(1);
-        radioAudio.ontimeupdate = () => {
-            const d = radioAudio.duration;
-            if (!d || !isFinite(d)) return;
-            const p = Math.min(Math.max(radioAudio.currentTime / d, 0), 1);
-            const rl = document.getElementById('reelL');
-            const rr = document.getElementById('reelR');
-            if (rl) rl.style.animationDuration = (3.6 - 2.4 * p) + 's';
-            if (rr) rr.style.animationDuration = (1.2 + 2.4 * p) + 's';
-        };
         radioAudio.play().catch(e => console.warn('radio play failed', e));
         radioPlaying = true;
         updateRadioUI();
@@ -1964,7 +1955,10 @@ document.querySelectorAll('.item').forEach(function(el) {
         const btn = document.getElementById('radioToggle');
         const track = document.getElementById('radioTrack');
         if (cassette) cassette.classList.toggle('playing', radioPlaying);
-        if (btn) btn.textContent = radioPlaying ? '⏹' : '▶';
+        if (btn) {
+            btn.textContent = radioPlaying ? '⏹' : '▶';
+            btn.classList.toggle('lit', radioPlaying);
+        }
         const label = radioTrackLabel(radioPlaylist[radioTrackIdx]);
         if (track && label !== radioTypedLabel) {
             radioTypedLabel = label;
