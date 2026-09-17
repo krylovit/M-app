@@ -1318,14 +1318,21 @@ nav button.nav-games:active {
     position: relative;
     z-index: 1;
 }
-.reel::before {
-    content: '';
+.reel-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.tape {
     position: absolute;
-    inset: -10px;
+    inset: 0;
     border-radius: 50%;
-    background: repeating-radial-gradient(circle, #38260f 0 2px, #241705 2px 4px);
-    box-shadow: 0 0 0 1px #161005, inset 0 0 6px rgba(0, 0, 0, 0.8);
-    z-index: -1;
+    background: repeating-radial-gradient(circle at center, #170e04 0 2px, #2e1f0c 2px 4px);
+    box-shadow: 0 0 0 1px #0d0802;
 }
 .reel::after {
     content: '';

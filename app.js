@@ -1856,8 +1856,8 @@ document.querySelectorAll('.item').forEach(function(el) {
                     <div class="cassette-sub">МК 60-5 · ГОСТ 137-1973/128 · Цена 4 руб. · 03.1990</div>
                     <div class="cassette-stripes"></div>
                     <div class="cassette-window">
-                        <div class="reel" id="reelL"></div>
-                        <div class="reel" id="reelR"></div>
+                        <div class="reel-wrap"><div class="tape"></div><div class="reel" id="reelL"></div></div>
+                        <div class="reel-wrap"><div class="tape"></div><div class="reel" id="reelR"></div></div>
                     </div>
                     <div class="cassette-track" id="radioTrack"></div>
                 </div>
