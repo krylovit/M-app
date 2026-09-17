@@ -547,6 +547,13 @@ document.addEventListener('DOMContentLoaded', function() {
     .item img { width:100%; height:120px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:#0f1b3d; }
     .item .emoji { font-size:28px; margin-bottom:6px; }
     .name { font-size:12px; font-weight:600; }
+    .back-btn {
+        display:block; width:100%; margin-top:16px; padding:14px;
+        background:linear-gradient(145deg,#1a2a5c,#0f1b3d);
+        border:1px solid #00d4ff66; border-radius:12px;
+        color:#00d4ff; font-size:15px; font-weight:600; cursor:pointer;
+    }
+    .back-btn:active { transform:scale(0.97); }
 </style>
 </head>
 <body>
@@ -558,6 +565,7 @@ ${GAMES.map(g => `<div class="item" data-rom="${g.rom}" data-core="${g.core}" da
     <div class="name">${g.title}</div>
 </div>`).join('')}
 </div>
+<button class="back-btn" onclick="parent.document.getElementById('battleship-container').style.display='none'">\u{1F519} \u041D\u0430\u0437\u0430\u0434</button>
 <script>
 document.querySelectorAll('.item').forEach(function(el) {
     el.addEventListener('click', function() {
@@ -579,11 +587,9 @@ document.querySelectorAll('.item').forEach(function(el) {
     }
 
     function openGame3d() {
-        const container = document.getElementById('battleship-container');
-        const frame = document.getElementById('battleship-frame');
-        frame.src = 'https://kapitanpiho.duckdns.org/game3d/';
-        container.style.display = 'block';
-        showCloseBtn();
+        const url = 'https://kapitanpiho.duckdns.org/game3d/';
+        if (tg && tg.openLink) tg.openLink(url);
+        else window.open(url, '_blank');
     }
 
     // ===== ГОМОКУ 10×10 =====
