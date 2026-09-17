@@ -1807,6 +1807,19 @@ document.querySelectorAll('.item').forEach(function(el) {
         }
     });
 
+    // ===== РАДИО =====
+    function showRadio() {
+        currentView = 'radio';
+        setBackBtnVisible(true);
+        render(`
+            <h2>📻 Радио</h2>
+            <div style="text-align:center; padding:40px 20px; color:var(--text-dim);">
+                <div style="font-size:64px; margin-bottom:16px;">📼</div>
+                <p>Экран радио — в разработке</p>
+            </div>
+        `);
+    }
+
     function setupNavigation() {
         const nav = document.getElementById('mainMenu');
         if (!nav) return;
@@ -1816,6 +1829,7 @@ document.querySelectorAll('.item').forEach(function(el) {
             else if (a === 'weather') btn.addEventListener('click', showWeather);
             else if (a === 'mouse') btn.addEventListener('click', showMouseDay);
             else if (a === 'events') btn.addEventListener('click', showEvents);
+            else if (a === 'radio') btn.addEventListener('click', showRadio);
             else if (a === 'games') {
                 btn.addEventListener('click', () => {
                     currentView = 'platform';
