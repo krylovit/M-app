@@ -1870,34 +1870,17 @@ document.querySelectorAll('.item').forEach(function(el) {
         }
     }
 
-    let radioBlobUrl = null;
-    let radioLoading = false;
+    const MUSIC_URL = 'https://kapitanpiho.duckdns.org/music';
 
-    async function radioPlayTrack(idx) {
-        if (!radioPlaylist.length || radioLoading) return;
+    function radioPlayTrack(idx) {
+        if (!radioPlaylist.length) return;
         radioTrackIdx = ((idx % radioPlaylist.length) + radioPlaylist.length) % radioPlaylist.length;
         const t = radioPlaylist[radioTrackIdx];
-        const trackEl = document.getElementById('radioTrack');
-        if (trackEl) trackEl.textContent = 'Загрузка...';
-        radioLoading = true;
-        try {
-            // audio-элемент не шлёт ngrok-заголовок — качаем через fetch и играем из blob
-            const resp = await fetch(`${API_URL}/api/music/file/${encodeURIComponent(t.file)}`, { headers: HEADERS });
-            if (!resp.ok) throw new Error('http ' + resp.status);
-            const blob = await resp.blob();
-            if (!radioAudio) radioAudio = new Audio();
-            if (radioBlobUrl) URL.revokeObjectURL(radioBlobUrl);
-            radioBlobUrl = URL.createObjectURL(blob);
-            radioAudio.src = radioBlobUrl;
-            radioAudio.onended = () => radioSkip(1);
-            await radioAudio.play().catch(e => console.warn('radio play failed', e));
-            radioPlaying = true;
-        } catch (e) {
-            console.warn('radio load failed', e);
-            if (trackEl) trackEl.textContent = 'Ошибка загрузки';
-            radioPlaying = false;
-        }
-        radioLoading = false;
+        if (!radioAudio) radioAudio = new Audio();
+        radioAudio.src = `${MUSIC_URL}/${encodeURIComponent(t.file)}`;
+        radioAudio.onended = () => radioSkip(1);
+        radioAudio.play().catch(e => console.warn('radio play failed', e));
+        radioPlaying = true;
         updateRadioUI();
     }
 
