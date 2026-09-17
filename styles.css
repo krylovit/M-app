@@ -1185,29 +1185,38 @@ nav button.nav-games:active {
     max-width: 340px;
     aspect-ratio: 100 / 64;
     margin: 6px auto 18px;
-    background: linear-gradient(160deg, #252e50 0%, #151c38 55%, #0e1430 100%);
+    background: linear-gradient(160deg, #f2ead6 0%, #e3d9bf 55%, #d3c7a8 100%);
     border-radius: 10px;
-    border: 1px solid var(--border-subtle);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border: 1px solid #b3a684;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.35);
     transition: box-shadow 0.4s;
 }
+.cassette::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 10px;
+    background: repeating-linear-gradient(115deg, rgba(0, 0, 0, 0.025) 0 2px, transparent 2px 5px);
+    pointer-events: none;
+}
 .cassette.playing {
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 28px rgba(0, 212, 255, 0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 28px rgba(255, 170, 0, 0.35);
 }
 
 .cassette-screw {
     position: absolute;
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: radial-gradient(circle at 35% 35%, #4a5578, #1a2140);
+    background: radial-gradient(circle at 35% 35%, #9c9276, #5e563f);
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+    z-index: 2;
 }
 .cassette-screw::after {
     content: '';
     position: absolute;
     left: 15%; right: 15%; top: 44%;
     height: 1.5px;
-    background: #0a0e27;
+    background: #3d3727;
     transform: rotate(45deg);
 }
 .cassette-screw.tl { top: 4px; left: 4px; }
@@ -1220,36 +1229,63 @@ nav button.nav-games:active {
     top: 6px; right: 18px;
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: #2a3050;
+    background: #8a7f63;
     transition: all 0.3s;
+    z-index: 2;
 }
 .cassette.playing .cassette-led {
-    background: var(--accent-pink);
-    box-shadow: 0 0 8px var(--accent-pink);
+    background: var(--accent-amber);
+    box-shadow: 0 0 8px var(--accent-amber);
 }
 
 .cassette-label {
     position: absolute;
     left: 6%; right: 6%; top: 9%;
     height: 60%;
-    background: linear-gradient(180deg, #e9e5d9 0%, #d8d3c2 100%);
+    background: linear-gradient(180deg, #24272e 0%, #14161c 100%);
     border-radius: 6px;
     display: flex;
     flex-direction: column;
     padding: 2.5% 4%;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.cassette-label::after {
+    content: '60';
+    position: absolute;
+    right: 4%; bottom: 2%;
+    font-family: 'Orbitron', monospace;
+    font-size: 26px;
+    font-weight: 900;
+    color: rgba(216, 207, 180, 0.12);
+    pointer-events: none;
 }
 
 .cassette-brand {
     font-family: 'Orbitron', monospace;
     font-size: 9px;
     letter-spacing: 2px;
-    color: #a04030;
+    color: #d8cfb4;
     text-align: center;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-    padding-bottom: 3px;
+    padding-bottom: 2px;
     white-space: nowrap;
     overflow: hidden;
+}
+
+.cassette-sub {
+    font-family: 'Courier New', monospace;
+    font-size: 7px;
+    letter-spacing: 0.5px;
+    color: rgba(216, 207, 180, 0.55);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-bottom: 2px;
+}
+
+.cassette-stripes {
+    height: 7px;
+    margin: 1px 2%;
+    background: repeating-linear-gradient(0deg, rgba(216, 207, 180, 0.5) 0 1px, transparent 1px 2.5px);
 }
 
 .cassette-window {
@@ -1270,10 +1306,10 @@ nav button.nav-games:active {
     content: '';
     position: absolute;
     left: 10%; right: 10%; top: 50%;
-    height: 3px;
-    background: #241a12;
+    height: 5px;
+    background: linear-gradient(180deg, #4a3520, #2a1d10);
     transform: translateY(-50%);
-    opacity: 0.9;
+    opacity: 0.95;
 }
 
 .reel {
@@ -1302,13 +1338,14 @@ nav button.nav-games:active {
 }
 
 .cassette-track {
+    font-family: 'Courier New', 'Consolas', monospace;
     font-size: 11px;
-    font-weight: 600;
-    color: #2a3050;
+    font-weight: 700;
+    color: var(--accent-amber);
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.5);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
     min-height: 15px;
     padding-top: 2px;
 }
@@ -1317,7 +1354,7 @@ nav button.nav-games:active {
     position: absolute;
     left: 20%; right: 20%; bottom: 0;
     height: 17%;
-    background: #0a0f22;
+    background: linear-gradient(180deg, #a3966f, #8d7f58);
     clip-path: polygon(14% 0, 86% 0, 100% 100%, 0 100%);
 }
 

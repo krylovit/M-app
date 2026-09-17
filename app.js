@@ -1826,6 +1826,8 @@ document.querySelectorAll('.item').forEach(function(el) {
     let radioPlaying = false;
     let radioPlaylist = [];
     let radioTrackIdx = 0;
+    let radioTypeToken = 0;
+    let radioTypedLabel = '';
 
     function radioTrackLabel(t) {
         if (!t) return '—';
@@ -1835,7 +1837,6 @@ document.querySelectorAll('.item').forEach(function(el) {
     function showRadio() {
         currentView = 'radio';
         setBackBtnVisible(true);
-        const cur = radioPlaylist[radioTrackIdx];
         render(`
             <h2>📻 Магнитофон</h2>
             <div class="cassette ${radioPlaying ? 'playing' : ''}" id="cassette">
@@ -1845,12 +1846,15 @@ document.querySelectorAll('.item').forEach(function(el) {
                 <div class="cassette-screw br"></div>
                 <div class="cassette-led"></div>
                 <div class="cassette-label">
-                    <div class="cassette-brand">KAPITAN PIHLO · CHROME 90</div>
+                    <div class="cassette-brand">KAPITAN PIHLO</div>
+                    <div class="cassette-sub">МК 60-5 · ГОСТ 137-1973/128 · Цена 4 руб. · 03.1990</div>
+                    <div class="cassette-stripes"></div>
                     <div class="cassette-window">
-                        <div class="reel"></div>
-                        <div class="reel"></div>
+                        <div class="reel" id="reelL"></div>
+                        <div class="reel" id="reelR"></div>
                     </div>
-                    <div class="cassette-track" id="radioTrack">${radioTrackLabel(cur)}</div>
+                    <div class="cassette-stripes"></div>
+                    <div class="cassette-track" id="radioTrack"></div>
                 </div>
                 <div class="cassette-bottom"></div>
             </div>
@@ -1872,7 +1876,12 @@ document.querySelectorAll('.item').forEach(function(el) {
             const r = await fetch(`${API_URL}/api/music/list`, { headers: HEADERS });
             const d = await r.json();
             if (d.success && d.tracks && d.tracks.length) {
-                radioPlaylist = d.tracks;
+                radioPlaylist = d.tracks.slice();
+                for (let i = radioPlaylist.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [radioPlaylist[i], radioPlaylist[j]] = [radioPlaylist[j], radioPlaylist[i]];
+                }
+                radioTrackIdx = 0;
                 updateRadioUI();
             } else {
                 const el = document.getElementById('radioTrack');
@@ -1893,6 +1902,15 @@ document.querySelectorAll('.item').forEach(function(el) {
         if (!radioAudio) radioAudio = new Audio();
         radioAudio.src = `${MUSIC_URL}/${encodeURIComponent(t.file)}`;
         radioAudio.onended = () => radioSkip(1);
+        radioAudio.ontimeupdate = () => {
+            const d = radioAudio.duration;
+            if (!d || !isFinite(d)) return;
+            const p = Math.min(Math.max(radioAudio.currentTime / d, 0), 1);
+            const rl = document.getElementById('reelL');
+            const rr = document.getElementById('reelR');
+            if (rl) rl.style.animationDuration = (3.6 - 2.4 * p) + 's';
+            if (rr) rr.style.animationDuration = (1.2 + 2.4 * p) + 's';
+        };
         radioAudio.play().catch(e => console.warn('radio play failed', e));
         radioPlaying = true;
         updateRadioUI();
@@ -1916,13 +1934,31 @@ document.querySelectorAll('.item').forEach(function(el) {
         radioPlayTrack(radioTrackIdx + dir);
     }
 
+    async function radioTypeText(el, text) {
+        const token = ++radioTypeToken;
+        while (el.textContent.length && token === radioTypeToken) {
+            el.textContent = el.textContent.slice(0, -1);
+            await dosSleep(18);
+        }
+        for (let i = 1; i <= text.length; i++) {
+            if (token !== radioTypeToken) return;
+            el.textContent = text.slice(0, i) + '▌';
+            await dosSleep(45);
+        }
+        if (token === radioTypeToken) el.textContent = text;
+    }
+
     function updateRadioUI() {
         const cassette = document.getElementById('cassette');
         const btn = document.getElementById('radioToggle');
         const track = document.getElementById('radioTrack');
         if (cassette) cassette.classList.toggle('playing', radioPlaying);
         if (btn) btn.textContent = radioPlaying ? '⏹' : '▶';
-        if (track) track.textContent = radioTrackLabel(radioPlaylist[radioTrackIdx]);
+        const label = radioTrackLabel(radioPlaylist[radioTrackIdx]);
+        if (track && label !== radioTypedLabel) {
+            radioTypedLabel = label;
+            radioTypeText(track, label);
+        }
         const counter = document.getElementById('radioCounter');
         if (counter) counter.textContent = radioPlaylist.length ? `трек ${radioTrackIdx + 1} / ${radioPlaylist.length}` : '';
     }
