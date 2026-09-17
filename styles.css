@@ -1226,8 +1226,8 @@ nav button.nav-games:active {
 
 .cassette-led {
     position: absolute;
-    top: 6px; right: 18px;
-    width: 7px; height: 7px;
+    bottom: 8px; right: 16px;
+    width: 9px; height: 9px;
     border-radius: 50%;
     background: #8a7f63;
     transition: all 0.3s;
@@ -1293,7 +1293,7 @@ nav button.nav-games:active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 9%;
+    padding: 0 13%;
     position: relative;
     overflow: hidden;
 }
@@ -1309,8 +1309,8 @@ nav button.nav-games:active {
 }
 
 .reel {
-    width: 40px;
-    height: 40px;
+    height: 62%;
+    aspect-ratio: 1 / 1;
     flex-shrink: 0;
     border-radius: 50%;
     background: repeating-conic-gradient(#dfe3ee 0deg 22deg, #8b94b8 22deg 45deg, #dfe3ee 45deg 60deg);
@@ -1320,8 +1320,8 @@ nav button.nav-games:active {
 }
 .reel-wrap {
     position: relative;
-    width: 64px;
-    height: 64px;
+    height: 110%;
+    aspect-ratio: 1 / 1;
     flex-shrink: 0;
     display: flex;
     align-items: center;
