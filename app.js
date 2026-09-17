@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="game-card-stats">Эмулятор</div>
                 </div>
                 <div class="game-card" data-game="game3d">
-                    <div class="game-card-icon"><img src="img/game3d.jpg" alt="3D" style="width:48px;height:48px;border-radius:10px;object-fit:cover;" onerror="this.outerHTML='🎮'"></div>
+                    <div class="game-card-icon"><img src="icons/3d.jpg" alt="3D" style="width:48px;height:48px;border-radius:10px;object-fit:cover;" onerror="this.outerHTML='🎮'"></div>
                     <div class="game-card-title">3D ИГРА</div>
                     <div class="game-card-stats">Unity WebGL</div>
                 </div>
