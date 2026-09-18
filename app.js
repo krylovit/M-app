@@ -1986,17 +1986,24 @@ document.querySelectorAll('.item').forEach(function(el) {
     let vcrSaveTimer = 0;
     let vcrOsdTimer = null;
 
+    const vcrCollator = new Intl.Collator('ru', { numeric: true, sensitivity: 'base' });
+
+    function videoSortNode(node) {
+        node.files.sort((a, b) => vcrCollator.compare(a.name, b.name));
+        Object.values(node.dirs).forEach(videoSortNode);
+    }
+
     function videoBuildTree(files) {
         const root = { dirs: {}, files: [] };
         files.forEach(f => {
             const parts = f.path.split('/');
             let node = root;
             for (let i = 0; i < parts.length - 1; i++) {
-                if (!node.dirs[parts[i]]) node.dirs[parts[i]] = { dirs: {}, files: [] };
-                node = node.dirs[parts[i]];
+                node = node.dirs[parts[i]] = node.dirs[parts[i]] || { dirs: {}, files: [] };
             }
-            node.files.push(f);
+            node.files.push({ name: parts[parts.length - 1].replace(/\.[^.]+$/, ''), path: f.path });
         });
+        videoSortNode(root);
         return root;
     }
 
@@ -2062,7 +2069,7 @@ document.querySelectorAll('.item').forEach(function(el) {
             rows += `<div class="vid-row vid-dir" data-up="1"><span class="vid-ico">📁</span> ..</div>`;
         }
         if (node) {
-            Object.keys(node.dirs).sort().forEach(d => {
+            Object.keys(node.dirs).sort(vcrCollator.compare).forEach(d => {
                 const cnt = videoCountFiles(node.dirs[d]);
                 rows += `<div class="vid-row vid-dir" data-dir="${escapeHtml(d)}"><span class="vid-ico">📁</span> ${escapeHtml(d)} <span class="vid-dim">(${cnt})</span></div>`;
             });
@@ -2222,11 +2229,16 @@ document.querySelectorAll('.item').forEach(function(el) {
             const idx = vcrDirFiles.findIndex(f => f.path === path);
             if (idx >= 0 && idx + 1 < vcrDirFiles.length) showVideoPlayer(vcrDirFiles[idx + 1].path);
         });
-        document.getElementById('vcrFs').addEventListener('click', () => {
-            if (document.fullscreenElement) document.exitFullscreen();
-            else if (screen.requestFullscreen) screen.requestFullscreen();
-            else if (screen.webkitRequestFullscreen) screen.webkitRequestFullscreen();
-            else if (vcrVideo.webkitEnterFullscreen) vcrVideo.webkitEnterFullscreen();
+        document.getElementById('vcrFs').addEventListener('click', async () => {
+            const vcrRoot = document.querySelector('.vcr');
+            if (document.fullscreenElement) { document.exitFullscreen().catch(() => {}); return; }
+            if (vcrRoot.classList.contains('vcr-pseudo-fs')) { vcrRoot.classList.remove('vcr-pseudo-fs'); return; }
+            try {
+                if (vcrRoot.requestFullscreen) { await vcrRoot.requestFullscreen(); return; }
+                if (vcrRoot.webkitRequestFullscreen) { vcrRoot.webkitRequestFullscreen(); return; }
+                if (vcrVideo.webkitEnterFullscreen) { vcrVideo.webkitEnterFullscreen(); return; }
+            } catch (e) { /* WebView отклонил — уходим в псевдо-фулскрин */ }
+            vcrRoot.classList.add('vcr-pseudo-fs');
         });
         document.getElementById('vcrProgress').addEventListener('click', (e) => {
             if (!vcrVideo.duration) return;
