@@ -1524,3 +1524,193 @@ nav button.nav-games:active {
     font-size: 15px;
     line-height: 1.9;
 }
+
+/* ===== ВИДАК: браузер каталога ===== */
+.vid-browser {
+    font-family: 'Courier New', 'Consolas', monospace;
+}
+.vid-path {
+    font-size: 14px;
+    color: var(--accent-amber);
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.45);
+    padding: 10px 12px;
+    background: rgba(5, 8, 26, 0.6);
+    border: 1px solid rgba(255, 170, 0, 0.25);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    word-break: break-all;
+}
+.vid-list {
+    border: 1px solid rgba(255, 170, 0, 0.25);
+    border-radius: 0 0 10px 10px;
+    background: rgba(5, 8, 26, 0.45);
+    overflow: hidden;
+}
+.vid-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    font-size: 14px;
+    color: var(--accent-amber);
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.35);
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 170, 0, 0.08);
+    transition: background 0.12s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.vid-row:last-child { border-bottom: none; }
+.vid-row:active, .vid-row:hover {
+    background: rgba(255, 170, 0, 0.12);
+}
+.vid-ico { flex-shrink: 0; }
+.vid-dim {
+    color: rgba(255, 170, 0, 0.5);
+    font-size: 12px;
+}
+.vid-watched {
+    color: var(--accent-green);
+    text-shadow: 0 0 6px rgba(0, 255, 157, 0.5);
+}
+.vid-empty {
+    padding: 24px 12px;
+    text-align: center;
+    font-size: 13px;
+    color: rgba(255, 170, 0, 0.55);
+}
+
+/* ===== ВИДАК: плеер ===== */
+.vcr {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.vcr-screen {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 170, 0, 0.25);
+}
+.vcr-screen:fullscreen {
+    border-radius: 0;
+    border: none;
+}
+.vcr-screen video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+    background: #000;
+}
+.vcr-screen:fullscreen video {
+    width: 100vw;
+    height: 100vh;
+}
+.vcr-tracking {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.14) 0 2px, transparent 2px 5px),
+        repeating-linear-gradient(0deg, transparent 0 26px, rgba(255,255,255,0.28) 26px 30px, transparent 30px 64px);
+    mix-blend-mode: screen;
+}
+.vcr-tracking.on {
+    animation: vcr-track 0.45s steps(6) 1;
+}
+@keyframes vcr-track {
+    0% { opacity: 0.9; transform: translateY(0); }
+    50% { opacity: 0.6; transform: translateY(-6px); }
+    100% { opacity: 0; transform: translateY(4px); }
+}
+.vcr-osd {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-amber);
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.8), 0 0 2px #000;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+}
+.vcr-osd.show { opacity: 1; }
+
+.vcr-deck {
+    background: linear-gradient(180deg, #1a1d26 0%, #12141c 100%);
+    border: 1px solid rgba(255, 170, 0, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+}
+.vcr-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #05070f;
+    border: 1px solid rgba(255, 170, 0, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
+}
+.vcr-mode {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--accent-amber);
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.7);
+}
+.vcr-time {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent-amber);
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.7);
+}
+.vcr-title {
+    margin-top: 8px;
+    font-family: 'Courier New', 'Consolas', monospace;
+    font-size: 12px;
+    color: rgba(255, 170, 0, 0.75);
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.35);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+}
+.vcr-progress {
+    margin-top: 10px;
+    height: 8px;
+    border-radius: 4px;
+    background: #05070f;
+    border: 1px solid rgba(255, 170, 0, 0.25);
+    cursor: pointer;
+    overflow: hidden;
+}
+.vcr-progress-fill {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, rgba(255, 170, 0, 0.6), var(--accent-amber));
+    box-shadow: 0 0 8px rgba(255, 170, 0, 0.5);
+    transition: width 0.25s linear;
+}
+.vcr-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.vcr-controls .deck-btn {
+    width: 52px;
+    height: 40px;
+    font-size: 16px;
+}
