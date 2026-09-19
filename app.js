@@ -161,6 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (currentView === 'game_checkers') showCheckers();
         else if (currentView === 'video') showVideo();
         else if (currentView === 'videoplayer' && vcrCurrentFile) showVideoPlayer(vcrCurrentFile.path);
+        else if (currentView === 'musicCatalog') showMusicCatalog();
         else showMainMenu();
     }
 
@@ -1776,6 +1777,8 @@ document.querySelectorAll('.item').forEach(function(el) {
         else if (currentView === 'game_ttt' || currentView === 'game_c4' || currentView === 'game_checkers') { currentView = 'platform'; currentPlatformTab = 'games'; showPlatform(); }
         else if (currentView === 'videoplayer') { stopVideo(); currentView = 'video'; renderVideoDir(); }
         else if (currentView === 'video' && videoPath.length) { videoPath.pop(); renderVideoDir(); }
+        else if (currentView === 'musicCatalog' && musicPath.length) { musicPath.pop(); renderMusicDir(); }
+        else if (currentView === 'musicCatalog') { showRadio(); }
         else if (currentView === 'platform' || currentView === 'video') { showMainMenu(); }
         else { showMainMenu(); }
     });
@@ -1876,6 +1879,7 @@ document.querySelectorAll('.item').forEach(function(el) {
                 <button class="deck-btn" id="radioPrev">⏮</button>
                 <button class="deck-btn${radioPlaying ? ' lit' : ''}" id="radioToggle">${radioPlaying ? '⏹' : '▶'}</button>
                 <button class="deck-btn" id="radioNext">⏭</button>
+                <button class="deck-btn" id="radioBrowse" title="Каталог кассет">📂</button>
             </div>
         `);
         document.getElementById('radioToggle').addEventListener('click', toggleRadio);
@@ -1887,7 +1891,10 @@ document.querySelectorAll('.item').forEach(function(el) {
             if (radioAudio) radioAudio.volume = radioVolume;
             vol.style.setProperty('--val', vol.value + '%');
         });
-        loadRadioPlaylist();
+        const browse = document.getElementById('radioBrowse');
+        if (browse) browse.addEventListener('click', showMusicCatalog);
+        if (radioPlaylist.length) updateRadioUI();
+        else loadRadioPlaylist();
     }
 
     async function loadRadioPlaylist() {
@@ -1920,7 +1927,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         const t = radioPlaylist[radioTrackIdx];
         if (!radioAudio) radioAudio = new Audio();
         radioAudio.volume = radioVolume;
-        radioAudio.src = `${MUSIC_URL}/${encodeURIComponent(t.file)}`;
+        radioAudio.src = `${MUSIC_URL}/${t.file.split('/').map(encodeURIComponent).join('/')}`;
         radioAudio.onended = () => radioSkip(1);
         radioAudio.play().catch(e => console.warn('radio play failed', e));
         radioPlaying = true;
@@ -1973,6 +1980,78 @@ document.querySelectorAll('.item').forEach(function(el) {
             radioTypedLabel = label;
             radioTypeText(track, label);
         }
+    }
+
+    // ===== КАТАЛОГ МУЗЫКИ (кассеты) =====
+    let musicAllTracks = [];
+    let musicTree = null;
+    let musicPath = [];
+
+    function musicNodeAt(path) {
+        let node = musicTree;
+        for (const p of path) node = node && node.dirs[p];
+        return node;
+    }
+
+    async function showMusicCatalog() {
+        currentView = 'musicCatalog';
+        setBackBtnVisible(true);
+        if (!musicTree) {
+            render(`<div class="dos-terminal">C:\\МУЗЫКА&gt; читаю каталог<span class="dos-cursor"></span></div>`);
+            try {
+                const r = await fetch(`${API_URL}/api/music/list`, { headers: HEADERS });
+                const d = await r.json();
+                if (d.success && d.tracks) {
+                    musicAllTracks = d.tracks;
+                    musicTree = videoBuildTree(musicAllTracks.map(t => ({ path: t.file })));
+                }
+            } catch (e) { /* fallthrough */ }
+            if (!musicTree) {
+                render(`<div class="dos-terminal">C:\\МУЗЫКА&gt; нет связи с сервером</div>`);
+                return;
+            }
+        }
+        renderMusicDir();
+    }
+
+    function renderMusicDir() {
+        const node = musicNodeAt(musicPath);
+        const cur = radioPlaylist[radioTrackIdx];
+        const pathStr = 'C:\\МУЗЫКА' + (musicPath.length ? '\\' + musicPath.join('\\') : '') + '&gt;';
+        let rows = '';
+        if (musicPath.length) {
+            rows += `<div class="vid-row vid-dir" data-up="1"><span class="vid-ico">📁</span> ..</div>`;
+        }
+        if (node) {
+            Object.keys(node.dirs).sort(vcrCollator.compare).forEach(d => {
+                const cnt = videoCountFiles(node.dirs[d]);
+                rows += `<div class="vid-row vid-dir" data-dir="${escapeHtml(d)}"><span class="vid-ico">📁</span> ${escapeHtml(d)} <span class="vid-dim">(${cnt})</span></div>`;
+            });
+            node.files.forEach(f => {
+                const playing = cur && cur.file === f.path ? ' <span class="vid-playing">♪</span>' : '';
+                rows += `<div class="vid-row vid-file" data-path="${escapeHtml(f.path)}"><span class="vid-ico">🎵</span> ${escapeHtml(f.name)}${playing}</div>`;
+            });
+        }
+        if (!rows) rows = '<div class="vid-empty">КАТАЛОГ ПУСТ — КИНИ КАССЕТЫ В ПАПКУ</div>';
+        render(`
+            <div class="vid-browser">
+                <div class="vid-path">${pathStr}<span class="dos-cursor"></span></div>
+                <div class="vid-list">${rows}</div>
+            </div>
+        `);
+        document.querySelectorAll('.vid-dir[data-up]').forEach(el =>
+            el.addEventListener('click', () => { musicPath.pop(); renderMusicDir(); }));
+        document.querySelectorAll('.vid-dir[data-dir]').forEach(el =>
+            el.addEventListener('click', () => { musicPath.push(el.getAttribute('data-dir')); renderMusicDir(); }));
+        document.querySelectorAll('.vid-file').forEach(el =>
+            el.addEventListener('click', () => {
+                const n = musicNodeAt(musicPath);
+                const files = n ? n.files : [];
+                radioPlaylist = files.map(f => ({ file: f.path, artist: '', title: f.name }));
+                radioTrackIdx = Math.max(0, files.findIndex(f => f.path === el.getAttribute('data-path')));
+                showRadio();
+                radioPlayTrack(radioTrackIdx);
+            }));
     }
 
     // ===== ВИДАК =====

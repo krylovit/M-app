@@ -1573,6 +1573,15 @@ nav button.nav-games:active {
     color: var(--accent-green);
     text-shadow: 0 0 6px rgba(0, 255, 157, 0.5);
 }
+.vid-playing {
+    color: var(--amber, #ffaa00);
+    text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);
+    animation: vidPlayingBlink 1.2s ease-in-out infinite;
+}
+@keyframes vidPlayingBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+}
 .vid-empty {
     padding: 24px 12px;
     text-align: center;
