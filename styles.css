@@ -1589,6 +1589,32 @@ nav button.nav-games:active {
     color: rgba(255, 170, 0, 0.55);
 }
 
+/* ===== Каталог музыки: обложки + корешки-кассеты ===== */
+.mus-cover {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-right: 8px;
+    border: 1px solid rgba(255, 170, 0, 0.35);
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.4);
+}
+.mus-browser .vid-row {
+    background: linear-gradient(90deg, rgba(30, 26, 16, 0.9), rgba(22, 19, 12, 0.9));
+    border: 1px solid rgba(255, 170, 0, 0.18);
+    border-left: 3px solid rgba(255, 170, 0, 0.55);
+    border-radius: 3px;
+    margin: 3px 0;
+    padding: 6px 8px;
+    display: flex;
+    align-items: center;
+}
+.mus-browser .vid-row:active {
+    border-left-color: #ffaa00;
+    background: rgba(60, 50, 25, 0.9);
+}
+
 /* ===== ВИДАК: плеер ===== */
 .vcr {
     display: flex;

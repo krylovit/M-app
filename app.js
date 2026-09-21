@@ -1993,6 +1993,14 @@ document.querySelectorAll('.item').forEach(function(el) {
         return node;
     }
 
+    function musicFileUrl(rel) {
+        return MUSIC_URL + '/' + rel.split('/').map(encodeURIComponent).join('/');
+    }
+
+    function musicCoverUrl(dirName) {
+        return musicFileUrl([...musicPath, dirName, 'front.jpg'].join('/'));
+    }
+
     async function showMusicCatalog() {
         currentView = 'musicCatalog';
         setBackBtnVisible(true);
@@ -2025,7 +2033,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         if (node) {
             Object.keys(node.dirs).sort(vcrCollator.compare).forEach(d => {
                 const cnt = videoCountFiles(node.dirs[d]);
-                rows += `<div class="vid-row vid-dir" data-dir="${escapeHtml(d)}"><span class="vid-ico">📁</span> ${escapeHtml(d)} <span class="vid-dim">(${cnt})</span></div>`;
+                rows += `<div class="vid-row vid-dir" data-dir="${escapeHtml(d)}"><img class="mus-cover" loading="lazy" src="${musicCoverUrl(d)}" onload="this.nextElementSibling.style.display='none'" onerror="this.remove()" alt=""><span class="vid-ico">📁</span> ${escapeHtml(d)} <span class="vid-dim">(${cnt})</span></div>`;
             });
             node.files.forEach(f => {
                 const playing = cur && cur.file === f.path ? ' <span class="vid-playing">♪</span>' : '';
@@ -2034,7 +2042,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         }
         if (!rows) rows = '<div class="vid-empty">КАТАЛОГ ПУСТ — КИНИ КАССЕТЫ В ПАПКУ</div>';
         render(`
-            <div class="vid-browser">
+            <div class="vid-browser mus-browser">
                 <div class="vid-path">${pathStr}<span class="dos-cursor"></span></div>
                 <div class="vid-list">${rows}</div>
             </div>
