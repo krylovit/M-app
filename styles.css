@@ -1615,6 +1615,98 @@ nav button.nav-games:active {
     background: rgba(60, 50, 25, 0.9);
 }
 
+/* ===== Плейлисты (дека) ===== */
+.pl-head {
+    margin: 14px 0 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 170, 0, 0.7);
+    letter-spacing: 1px;
+    border-top: 1px dashed rgba(255, 170, 0, 0.3);
+    padding-top: 10px;
+}
+.pl-add, .pl-rm, .pl-del, .pl-like {
+    margin-left: auto;
+    padding: 0 6px;
+    font-size: 13px;
+    cursor: pointer;
+    opacity: 0.65;
+    white-space: nowrap;
+}
+.pl-add:hover, .pl-like:hover, .pl-rm:hover {
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
+}
+.pl-del { opacity: 0.45; font-size: 12px; margin-left: 0; }
+.pl-like.on { opacity: 1; color: #ff5f7a; }
+.pl-input {
+    flex: 1;
+    min-width: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 170, 0, 0.4);
+    border-radius: 4px;
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 6px 8px;
+    outline: none;
+}
+.pl-ok {
+    margin-left: 8px;
+    background: rgba(255, 170, 0, 0.15);
+    border: 1px solid rgba(255, 170, 0, 0.5);
+    border-radius: 4px;
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+.pl-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 900;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+.pl-sheet {
+    width: 100%;
+    max-width: 480px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #15120b;
+    border: 1px solid rgba(255, 170, 0, 0.4);
+    border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    padding: 14px 12px 20px;
+    font-family: 'Courier New', monospace;
+    color: #ffaa00;
+}
+.pl-sheet-head {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: rgba(255, 170, 0, 0.8);
+}
+.pl-sheet-new {
+    display: flex;
+    margin-top: 10px;
+}
+.pl-sheet-x {
+    text-align: center;
+    margin-top: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    cursor: pointer;
+}
+.pl-owner {
+    padding: 0 2px 6px;
+    font-size: 11px;
+}
+
 /* ===== ВИДАК: плеер ===== */
 .vcr {
     display: flex;
