@@ -2045,7 +2045,7 @@ document.querySelectorAll('.item').forEach(function(el) {
             node.files.forEach(f => {
                 const playing = cur && cur.file === f.path ? ' <span class="vid-playing">♪</span>' : '';
                 const add = playlistsCanCreate ? `<span class="pl-add" data-add="${escapeHtml(f.path)}" title="В плейлист">➕</span>` : '';
-                rows += `<div class="vid-row vid-file" data-path="${escapeHtml(f.path)}"><span class="vid-ico">🎵</span> ${escapeHtml(f.name)}${playing}${add}</div>`;
+                rows += `<div class="vid-row vid-file" data-path="${escapeHtml(f.path)}"><span class="vid-ico">🎵</span> <span class="vid-name">${escapeHtml(f.name)}</span>${playing}${add}</div>`;
             });
         }
         if (musicPath.length === 0) {
@@ -2054,7 +2054,7 @@ document.querySelectorAll('.item').forEach(function(el) {
                 const mine = p.owner_id === getUserId();
                 const heart = p.liked ? '♥' : '♡';
                 const del = mine ? `<span class="pl-del" data-pl="${p.id}" title="Удалить плейлист">✖</span>` : '';
-                rows += `<div class="vid-row pl-row" data-pl="${p.id}"><span class="vid-ico">📻</span> ${escapeHtml(p.title)} <span class="vid-dim">(${p.tracks_count} · ${escapeHtml(p.owner)})</span><span class="pl-like${p.liked ? ' on' : ''}" data-pl="${p.id}" title="Нравится">${heart} ${p.likes}</span>${del}</div>`;
+                rows += `<div class="vid-row pl-row" data-pl="${p.id}"><span class="vid-ico">📻</span> <span class="vid-name">${escapeHtml(p.title)} <span class="vid-dim">(${p.tracks_count} · ${escapeHtml(p.owner)})</span></span><span class="pl-like${p.liked ? ' on' : ''}" data-pl="${p.id}" title="Нравится">${heart} ${p.likes}</span>${del}</div>`;
             });
             if (playlistsCanCreate) rows += `<div class="vid-row pl-new" id="plNewBtn"><span class="vid-ico">➕</span> Новый плейлист</div>`;
         }
@@ -2153,6 +2153,18 @@ document.querySelectorAll('.item').forEach(function(el) {
         setTimeout(() => input.focus(), 50);
     }
 
+    function plToast(msg, warn) {
+        let t = document.getElementById('plToast');
+        if (t) t.remove();
+        t = document.createElement('div');
+        t.id = 'plToast';
+        t.className = 'pl-toast' + (warn ? ' warn' : '');
+        t.textContent = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.classList.add('show'));
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => { if (t.parentNode) t.remove(); }, 300); }, 1800);
+    }
+
     function showPlSheet(file) {
         let ov = document.getElementById('plOverlay');
         if (ov) ov.remove();
@@ -2162,7 +2174,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         const mine = playlistsCache.filter(p => p.owner_id === getUserId());
         let inner = `<div class="pl-sheet-head">В КАКОЙ ПЛЕЙЛИСТ?</div>`;
         if (!mine.length) inner += `<div class="vid-dim" style="padding:6px 2px">своих плейлистов пока нет — создай ниже</div>`;
-        mine.forEach(p => inner += `<div class="vid-row pl-pick" data-pid="${p.id}"><span class="vid-ico">📻</span> ${escapeHtml(p.title)} <span class="vid-dim">(${p.tracks_count})</span></div>`);
+        mine.forEach(p => inner += `<div class="vid-row pl-pick" data-pid="${p.id}" data-title="${escapeHtml(p.title)}"><span class="vid-ico">📻</span> <span class="vid-name">${escapeHtml(p.title)} <span class="vid-dim">(${p.tracks_count})</span></span></div>`);
         inner += `<div class="pl-sheet-new"><input id="plSheetName" maxlength="60" placeholder="Новый плейлист..." class="pl-input"><button class="pl-ok" id="plSheetCreate">＋</button></div>`;
         inner += `<div class="pl-sheet-x">отмена</div>`;
         ov.innerHTML = `<div class="pl-sheet">${inner}</div>`;
@@ -2170,24 +2182,29 @@ document.querySelectorAll('.item').forEach(function(el) {
         ov.addEventListener('click', e => { if (e.target === ov || e.target.classList.contains('pl-sheet-x')) ov.remove(); });
         const nameI = document.getElementById('plSheetName');
         nameI.addEventListener('click', e => e.stopPropagation());
-        async function doAdd(pid) {
+        async function doAdd(pid, title) {
+            let d = null;
             try {
-                await fetch(`${API_URL}/api/playlist/${pid}/add`, {
+                const r = await fetch(`${API_URL}/api/playlist/${pid}/add`, {
                     method: 'POST', headers: { 'Content-Type': 'application/json', ...HEADERS },
                     body: JSON.stringify({ user_id: getUserId(), file })
                 });
+                d = await r.json();
             } catch (e) {}
             ov.remove();
+            if (d && d.added === false) plToast(`уже есть в «${title}»`, true);
+            else if (d && d.success) plToast(`добавлено в «${title}»`);
+            else plToast('не получилось добавить :(', true);
             await loadPlaylists();
             if (currentView === 'musicCatalog' && musicPath.length === 0) renderMusicDir();
         }
         ov.querySelectorAll('.pl-pick').forEach(el =>
-            el.addEventListener('click', () => doAdd(+el.getAttribute('data-pid'))));
+            el.addEventListener('click', () => doAdd(+el.getAttribute('data-pid'), el.getAttribute('data-title') || 'плейлист')));
         document.getElementById('plSheetCreate').addEventListener('click', async () => {
             const name = nameI.value.trim();
             if (!name) return;
             const d = await plApiCreate(name);
-            if (d && d.playlist_id) { await loadPlaylists(); await doAdd(d.playlist_id); }
+            if (d && d.playlist_id) { await loadPlaylists(); await doAdd(d.playlist_id, name); }
         });
     }
 
@@ -2215,7 +2232,7 @@ document.querySelectorAll('.item').forEach(function(el) {
             const name = t ? radioTrackLabel(t) : fp.split('/').pop().replace(/\.[^.]+$/, '');
             const playing = cur && cur.file === fp ? ' <span class="vid-playing">♪</span>' : '';
             const del = mine ? `<span class="pl-rm" data-idx="${i}" title="Убрать трек">✖</span>` : '';
-            rows += `<div class="vid-row vid-file" data-idx="${i}"><span class="vid-ico">🎵</span> ${escapeHtml(name)}${playing}${del}</div>`;
+            rows += `<div class="vid-row vid-file" data-idx="${i}"><span class="vid-ico">🎵</span> <span class="vid-name">${escapeHtml(name)}</span>${playing}${del}</div>`;
         });
         if (!rows) rows = '<div class="vid-empty">ЛЕНТА ПУСТА — ДОБАВЬ ТРЕКИ ЧЕРЕЗ ➕ В КАТАЛОГЕ</div>';
         render(`
@@ -2278,7 +2295,8 @@ document.querySelectorAll('.item').forEach(function(el) {
             for (let i = 0; i < parts.length - 1; i++) {
                 node = node.dirs[parts[i]] = node.dirs[parts[i]] || { dirs: {}, files: [] };
             }
-            node.files.push({ name: parts[parts.length - 1].replace(/\.[^.]+$/, ''), path: f.path });
+            const nm = parts[parts.length - 1].replace(/\.[^.]+$/, '').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+            node.files.push({ name: nm || parts[parts.length - 1], path: f.path });
         });
         videoSortNode(root);
         return root;

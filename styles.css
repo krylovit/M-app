@@ -1627,11 +1627,12 @@ nav button.nav-games:active {
     padding-top: 10px;
 }
 .pl-add, .pl-rm, .pl-del, .pl-like {
-    margin-left: auto;
+    flex: 0 0 auto;
     padding: 0 6px;
     font-size: 13px;
     cursor: pointer;
-    opacity: 0.65;
+    opacity: 1;
+    color: #ffaa00;
     white-space: nowrap;
 }
 .pl-add:hover, .pl-like:hover, .pl-rm:hover {
@@ -1706,6 +1707,44 @@ nav button.nav-games:active {
     padding: 0 2px 6px;
     font-size: 11px;
 }
+.mus-browser .vid-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.mus-browser .vid-name {
+    flex: 1 1 0%;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.mus-browser .pl-add, .mus-browser .pl-rm, .mus-browser .pl-del, .mus-browser .pl-like {
+    flex: 0 0 auto;
+    margin-left: 0;
+    opacity: 1;
+    color: #ffaa00;
+}
+.pl-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 84px;
+    transform: translateX(-50%) translateY(12px);
+    z-index: 950;
+    background: rgba(30, 24, 10, 0.95);
+    border: 1px solid rgba(255, 170, 0, 0.5);
+    border-radius: 6px;
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    padding: 8px 14px;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    white-space: nowrap;
+}
+.pl-toast.warn { border-color: rgba(255, 95, 122, 0.6); color: #ff5f7a; }
+.pl-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ===== ВИДАК: плеер ===== */
 .vcr {
