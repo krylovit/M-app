@@ -1836,6 +1836,23 @@ document.querySelectorAll('.item').forEach(function(el) {
     let radioTypeToken = 0;
     let radioTypedLabel = '';
     let radioVolume = 1;
+    let radioLastAlbum = null;
+    let radioSkipSwap = false;
+
+    const RADIO_ACCENTS = ['#ffaa00', '#ff7b2e', '#ffd21f', '#7de05f', '#39c5d6', '#6ea8ff'];
+
+    function radioAlbumOf(t) {
+        if (!t || !t.file) return '';
+        const p = t.file.split('/');
+        return p.length > 1 ? p[p.length - 2] : '';
+    }
+
+    function radioAccentFor(album) {
+        if (!album) return RADIO_ACCENTS[0];
+        let h = 0;
+        for (let i = 0; i < album.length; i++) h = (h * 31 + album.charCodeAt(i)) >>> 0;
+        return RADIO_ACCENTS[h % RADIO_ACCENTS.length];
+    }
 
     function radioTrackLabel(t) {
         if (!t) return '—';
@@ -1846,6 +1863,7 @@ document.querySelectorAll('.item').forEach(function(el) {
         currentView = 'radio';
         setBackBtnVisible(true);
         radioTypedLabel = '';
+        radioSkipSwap = true;
         render(`
             <div class="vol-row">
                 <span class="vol-ico">🔈</span>
@@ -1970,7 +1988,20 @@ document.querySelectorAll('.item').forEach(function(el) {
         const cassette = document.getElementById('cassette');
         const btn = document.getElementById('radioToggle');
         const track = document.getElementById('radioTrack');
-        if (cassette) cassette.classList.toggle('playing', radioPlaying);
+        if (cassette) {
+            cassette.classList.toggle('playing', radioPlaying);
+            const album = radioAlbumOf(radioPlaylist[radioTrackIdx]);
+            if (album !== radioLastAlbum) {
+                cassette.style.setProperty('--cass-accent', radioAccentFor(album));
+                if (!radioSkipSwap && radioLastAlbum !== null) {
+                    cassette.classList.remove('swap');
+                    void cassette.offsetWidth;
+                    cassette.classList.add('swap');
+                }
+                radioLastAlbum = album;
+            }
+        }
+        radioSkipSwap = false;
         if (btn) {
             btn.textContent = radioPlaying ? '⏹' : '▶';
             btn.classList.toggle('lit', radioPlaying);

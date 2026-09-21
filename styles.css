@@ -1180,6 +1180,7 @@ nav button.nav-games:active {
 }
 /* =====  / ССТ ===== */
 .cassette {
+    --cass-accent: #ffaa00;
     position: relative;
     width: 100%;
     max-width: 340px;
@@ -1234,8 +1235,8 @@ nav button.nav-games:active {
     z-index: 2;
 }
 .cassette.playing .cassette-led {
-    background: var(--accent-amber);
-    box-shadow: 0 0 8px var(--accent-amber);
+    background: var(--cass-accent);
+    box-shadow: 0 0 8px var(--cass-accent);
 }
 
 .cassette-label {
@@ -1359,14 +1360,25 @@ nav button.nav-games:active {
     to { transform: rotate(360deg); }
 }
 
+/* смена кассеты: вынули-вставили при переходе на другой альбом */
+.cassette.swap {
+    animation: cassetteSwap 0.6s ease-in-out;
+}
+@keyframes cassetteSwap {
+    0%   { transform: translateY(0);     opacity: 1; }
+    30%  { transform: translateY(-24px); opacity: 0; }
+    31%  { transform: translateY(14px);  opacity: 0; }
+    100% { transform: translateY(0);     opacity: 1; }
+}
+
 .cassette-track {
     flex: 0 0 auto;
     font-family: 'Courier New', 'Consolas', monospace;
     font-size: 10px;
     line-height: 1.5;
     font-weight: 700;
-    color: var(--accent-amber);
-    text-shadow: 0 0 6px rgba(255, 170, 0, 0.5);
+    color: var(--cass-accent);
+    text-shadow: 0 0 6px color-mix(in srgb, var(--cass-accent) 50%, transparent);
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
