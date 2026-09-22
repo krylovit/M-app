@@ -1576,6 +1576,7 @@ nav button.nav-games:active {
 .vid-playing {
     color: var(--amber, #ffaa00);
     text-shadow: 0 0 6px rgba(255, 170, 0, 0.6);
+    filter: drop-shadow(0 0 5px rgba(255, 170, 0, 0.9)) saturate(1.5);
     animation: vidPlayingBlink 1.2s ease-in-out infinite;
 }
 @keyframes vidPlayingBlink {

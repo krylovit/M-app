@@ -139,9 +139,9 @@ function renderPlaylistView() {
     pl.tracks.forEach((fp, i) => {
         const t = musicAllTracks.find(x => x.file === fp);
         const name = t ? radioTrackLabel(t) : fp.split('/').pop().replace(/\.[^.]+$/, '');
-        const playing = cur && cur.file === fp ? ' <span class="vid-playing">♪</span>' : '';
+        const playing = cur && cur.file === fp;
         const del = mine ? `<span class="pl-rm" data-idx="${i}" title="Убрать трек">✖</span>` : '';
-        rows += `<div class="vid-row vid-file" data-idx="${i}"><span class="vid-ico">🎵</span> <span class="vid-name">${escapeHtml(name)}</span>${playing}${del}</div>`;
+        rows += `<div class="vid-row vid-file" data-idx="${i}"><span class="vid-ico${playing ? ' vid-playing' : ''}">🎵</span> <span class="vid-name">${escapeHtml(name)}</span>${del}</div>`;
     });
     if (!rows) rows = '<div class="vid-empty">ЛЕНТА ПУСТА — ДОБАВЬ ТРЕКИ ЧЕРЕЗ ➕ В КАТАЛОГЕ</div>';
     render(`

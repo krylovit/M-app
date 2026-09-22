@@ -39,10 +39,10 @@ async function showMusicCatalog() {
             return;
         }
     }
-    renderMusicDir();
-    loadPlaylists().then(() => {
-        if (currentView === 'musicCatalog' && musicPath.length === 0) renderMusicDir();
-    });
+    // один рендер: в корне ждём плейлисты, в подпапках грузим их фоном (нужны для ➕)
+    if (musicPath.length === 0) await loadPlaylists();
+    else loadPlaylists();
+    if (currentView === 'musicCatalog') renderMusicDir();
 }
 
 function renderMusicDir() {
@@ -59,9 +59,9 @@ function renderMusicDir() {
             rows += `<div class="vid-row vid-dir" data-dir="${escapeHtml(d)}"><img class="mus-cover" loading="lazy" src="${musicCoverUrl(d)}" onload="this.nextElementSibling.style.display='none'" onerror="this.remove()" alt=""><span class="vid-ico">📁</span> ${escapeHtml(d)} <span class="vid-dim">(${cnt})</span></div>`;
         });
         node.files.forEach(f => {
-            const playing = cur && cur.file === f.path ? ' <span class="vid-playing">♪</span>' : '';
+            const playing = cur && cur.file === f.path;
             const add = playlistsCanCreate ? `<span class="pl-add" data-add="${escapeHtml(f.path)}" title="В плейлист">➕</span>` : '';
-            rows += `<div class="vid-row vid-file" data-path="${escapeHtml(f.path)}"><span class="vid-ico">🎵</span> <span class="vid-name">${escapeHtml(f.name)}</span>${playing}${add}</div>`;
+            rows += `<div class="vid-row vid-file" data-path="${escapeHtml(f.path)}"><span class="vid-ico${playing ? ' vid-playing' : ''}">🎵</span> <span class="vid-name">${escapeHtml(f.name)}</span>${add}</div>`;
         });
     }
     if (musicPath.length === 0) {
