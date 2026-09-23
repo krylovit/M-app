@@ -1,8 +1,8 @@
-// ===== каталог музыки (кассеты) =====
 // ===== КАТАЛОГ МУЗЫКИ (кассеты) =====
 let musicAllTracks = [];
 let musicTree = null;
 let musicPath = [];
+let musicQuery = '';
 let playlistsCache = [];
 let playlistsCanCreate = false;
 let currentPlaylist = null;
@@ -45,11 +45,32 @@ async function showMusicCatalog() {
     if (currentView === 'musicCatalog') renderMusicDir();
 }
 
-function renderMusicDir() {
-    const node = musicNodeAt(musicPath);
+// файлы, видимые в текущем режиме: результаты поиска или содержимое папки
+function musicVisibleFiles() {
+    if (musicQuery.trim()) {
+        const q = musicQuery.trim().toLowerCase();
+        return musicAllTracks
+            .filter(t => (t.file + ' ' + (t.title || '')).toLowerCase().includes(q))
+            .map(t => ({ path: t.file, name: t.title || t.file.split('/').pop() }));
+    }
+    const n = musicNodeAt(musicPath);
+    return n ? n.files : [];
+}
+
+function musicRowsHtml() {
     const cur = radioPlaylist[radioTrackIdx];
-    const pathStr = 'C:\\МУЗЫКА' + (musicPath.length ? '\\' + musicPath.join('\\') : '') + '&gt;';
     let rows = '';
+    // режим поиска: плоский список совпадений по всему каталогу
+    if (musicQuery.trim()) {
+        musicVisibleFiles().forEach(t => {
+            const playing = cur && cur.file === t.path;
+            const add = playlistsCanCreate ? `<span class="pl-add" data-add="${escapeHtml(t.path)}" title="В плейлист">➕</span>` : '';
+            const dir = t.path.split('/').slice(0, -1).join('/');
+            rows += `<div class="vid-row vid-file" data-path="${escapeHtml(t.path)}"><span class="vid-ico${playing ? ' vid-playing' : ''}">🎵</span> <span class="vid-name">${escapeHtml(t.name)} <span class="vid-dim">${escapeHtml(dir)}</span></span>${add}</div>`;
+        });
+        return rows || '<div class="vid-empty">НИЧЕГО НЕ НАЙДЕНО</div>';
+    }
+    const node = musicNodeAt(musicPath);
     if (musicPath.length) {
         rows += `<div class="vid-row vid-dir" data-up="1"><span class="vid-ico">📁</span> ..</div>`;
     }
@@ -74,21 +95,17 @@ function renderMusicDir() {
         });
         if (playlistsCanCreate) rows += `<div class="vid-row pl-new" id="plNewBtn"><span class="vid-ico">➕</span> Новый плейлист</div>`;
     }
-    if (!rows) rows = '<div class="vid-empty">КАТАЛОГ ПУСТ — КИНИ КАССЕТЫ В ПАПКУ</div>';
-    render(`
-        <div class="vid-browser mus-browser">
-            <div class="vid-path">${pathStr}<span class="dos-cursor"></span></div>
-            <div class="vid-list">${rows}</div>
-        </div>
-    `);
+    return rows || '<div class="vid-empty">КАТАЛОГ ПУСТ — КИНИ КАССЕТЫ В ПАПКУ</div>';
+}
+
+function attachMusicHandlers() {
     document.querySelectorAll('.vid-dir[data-up]').forEach(el =>
         el.addEventListener('click', () => { musicPath.pop(); renderMusicDir(); }));
     document.querySelectorAll('.vid-dir[data-dir]').forEach(el =>
         el.addEventListener('click', () => { musicPath.push(el.getAttribute('data-dir')); renderMusicDir(); }));
     document.querySelectorAll('.vid-file').forEach(el =>
         el.addEventListener('click', () => {
-            const n = musicNodeAt(musicPath);
-            const files = n ? n.files : [];
+            const files = musicVisibleFiles();
             radioPlaylist = files.map(f => ({ file: f.path, artist: '', title: f.name }));
             radioTrackIdx = Math.max(0, files.findIndex(f => f.path === el.getAttribute('data-path')));
             showRadio();
@@ -106,3 +123,20 @@ function renderMusicDir() {
     if (plNew) plNew.addEventListener('click', plCreateInline);
 }
 
+function renderMusicDir() {
+    const pathStr = 'C:\\МУЗЫКА' + (musicPath.length ? '\\' + musicPath.join('\\') : '') + '&gt;';
+    render(`
+        <div class="vid-browser mus-browser">
+            <div class="vid-path">${pathStr}<span class="dos-cursor"></span></div>
+            <div class="mus-search-row"><input id="musSearch" class="pl-input mus-search" maxlength="80" placeholder="🔍 ПОИСК ПО КАССЕТАМ..." value="${escapeHtml(musicQuery)}"></div>
+            <div class="vid-list">${musicRowsHtml()}</div>
+        </div>
+    `);
+    attachMusicHandlers();
+    // ввод фильтрует только список — инпут не пересоздаётся, фокус не теряется
+    document.getElementById('musSearch').addEventListener('input', (e) => {
+        musicQuery = e.target.value;
+        document.querySelector('.vid-list').innerHTML = musicRowsHtml();
+        attachMusicHandlers();
+    });
+}

@@ -1654,6 +1654,13 @@ nav button.nav-games:active {
     padding: 6px 8px;
     outline: none;
 }
+.mus-search-row {
+    display: flex;
+    padding: 2px 2px 8px;
+}
+.mus-search {
+    width: 100%;
+}
 .pl-ok {
     margin-left: 8px;
     background: rgba(255, 170, 0, 0.15);

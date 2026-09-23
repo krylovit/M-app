@@ -1,18 +1,18 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой помощник</title>
+    <title>РњРѕР№ РїРѕРјРѕС‰РЅРёРє</title>
 
-    <!-- Шрифт Orbitron для заголовков -->
+    <!-- РЁСЂРёС„С‚ Orbitron РґР»СЏ Р·Р°РіРѕР»РѕРІРєРѕРІ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="styles.css?v=134">
+    <link rel="stylesheet" href="styles.css?v=135">
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js"></script>
@@ -24,58 +24,58 @@
 <body>
     <div id="app">
         <header>
-            <h1>🐭 Мой помощник</h1>
+            <h1>рџђ­ РњРѕР№ РїРѕРјРѕС‰РЅРёРє</h1>
         </header>
 
         <nav id="mainMenu">
-            <button data-action="rates">💵 Курсы</button>
-            <button data-action="weather">🌤️ Погода</button>
-            <button data-action="mouse">🐭 День мыши</button>
-            <button data-action="events">📅 События</button>
-            <button data-action="games" class="nav-games">🎮 Игровая платформа</button>
-            <button data-action="radio" class="nav-games">📻 Магнитофон</button>
-            <button data-action="video" class="nav-games">📼 Видак</button>
+            <button data-action="rates">рџ’µ РљСѓСЂСЃС‹</button>
+            <button data-action="weather">рџЊ¤пёЏ РџРѕРіРѕРґР°</button>
+            <button data-action="mouse">рџђ­ Р”РµРЅСЊ РјС‹С€Рё</button>
+            <button data-action="events">рџ“… РЎРѕР±С‹С‚РёСЏ</button>
+            <button data-action="games" class="nav-games">рџЋ® РРіСЂРѕРІР°СЏ РїР»Р°С‚С„РѕСЂРјР°</button>
+            <button data-action="radio" class="nav-games">рџ“» РњР°РіРЅРёС‚РѕС„РѕРЅ</button>
+            <button data-action="video" class="nav-games">рџ“ј Р’РёРґР°Рє</button>
         </nav>
 
         <main id="content">
             <div class="dos-terminal">C:\&gt; <span class="dos-cursor"></span></div>
         </main>
 
-        <button id="backBtn" style="display:none;">🔙 Назад</button>
+        <button id="backBtn" style="display:none;">рџ”™ РќР°Р·Р°Рґ</button>
     </div>
 
     <div id="dos-splash"><div class="dos-terminal" id="dosTerm">C:\&gt; <span class="dos-cursor"></span></div></div>
 
     <div id="battleship-container" style="display:none; position:fixed; inset:0; background:#0a0e27; z-index:999;">
         <iframe id="battleship-frame" src="" style="width: 100%; height: 100vh; border: none; display: block;"></iframe>
-        <button id="closeBattleshipBtn" style="position:fixed; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:18px; cursor:pointer; z-index:1000; transition:opacity 0.3s;">✖</button>
-        <button id="fullscreenBtn" style="position:fixed; top:12px; right:56px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:16px; cursor:pointer; z-index:1000; transition:opacity 0.3s;">⛶</button>
+        <button id="closeBattleshipBtn" style="position:fixed; top:12px; right:12px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:18px; cursor:pointer; z-index:1000; transition:opacity 0.3s;">вњ–</button>
+        <button id="fullscreenBtn" style="position:fixed; top:12px; right:56px; width:36px; height:36px; border-radius:50%; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.3); color:#fff; font-size:16px; cursor:pointer; z-index:1000; transition:opacity 0.3s;">в›¶</button>
     </div>
 
     <div id="confirmModal" class="modal" style="display:none;">
         <div class="modal-content">
-            <h3>⚠️ Удалить событие?</h3>
-            <p id="confirmText">—</p>
+            <h3>вљ пёЏ РЈРґР°Р»РёС‚СЊ СЃРѕР±С‹С‚РёРµ?</h3>
+            <p id="confirmText">вЂ”</p>
             <div class="modal-buttons">
-                <button id="confirmCancel" class="btn-secondary">Отмена</button>
-                <button id="confirmDelete" class="btn-danger">🗑️ Удалить</button>
+                <button id="confirmCancel" class="btn-secondary">РћС‚РјРµРЅР°</button>
+                <button id="confirmDelete" class="btn-danger">рџ—‘пёЏ РЈРґР°Р»РёС‚СЊ</button>
             </div>
         </div>
     </div>
 
-    <script src="js/core.js?v=134"></script>
-    <script src="js/dos.js?v=134"></script>
-    <script src="js/platform.js?v=134"></script>
-    <script src="js/views.js?v=134"></script>
-    <script src="js/game_ttt.js?v=134"></script>
-    <script src="js/game_c4.js?v=134"></script>
-    <script src="js/game_checkers.js?v=134"></script>
-    <script src="js/game_bs.js?v=134"></script>
-    <script src="js/events.js?v=134"></script>
-    <script src="js/radio.js?v=134"></script>
-    <script src="js/music.js?v=134"></script>
-    <script src="js/playlists.js?v=134"></script>
-    <script src="js/video.js?v=134"></script>
-    <script src="js/main.js?v=134"></script>
+    <script src="js/core.js?v=135"></script>
+    <script src="js/dos.js?v=135"></script>
+    <script src="js/platform.js?v=135"></script>
+    <script src="js/views.js?v=135"></script>
+    <script src="js/game_ttt.js?v=135"></script>
+    <script src="js/game_c4.js?v=135"></script>
+    <script src="js/game_checkers.js?v=135"></script>
+    <script src="js/game_bs.js?v=135"></script>
+    <script src="js/events.js?v=135"></script>
+    <script src="js/radio.js?v=135"></script>
+    <script src="js/music.js?v=135"></script>
+    <script src="js/playlists.js?v=135"></script>
+    <script src="js/video.js?v=135"></script>
+    <script src="js/main.js?v=135"></script>
 </body>
 </html>
